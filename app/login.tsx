@@ -1,44 +1,64 @@
-import { StyleSheet, View, Text, TextInput, Alert, Pressable } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Alert, Pressable, Image } from 'react-native';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-
+import { router, useNavigation } from 'expo-router';
+import { API_URL } from '../paths'
 
 export default function LoginScreen() {
     
 
     const [text, setText] = useState('')
     const [password, setPassword] = useState('')
+    const [errors, setErrors] = useState<string[]>([]);
+    const navigation = useNavigation()
+    useEffect(() => {
+        navigation.setOptions({headerShown: false})
+    })
 
+    const submit = async (text: string, password: string) => {
 
-     const submit = async (text: string, password: string) => {
-    try {
-      const response = await fetch(`http://192.168.0.101:8080/api/v1/user/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: text,
-          password: password,
-        }),
-      });
+        try {
+            let errs = [] as string[]
+            setErrors([])
+            if(text.length < 4){
+                errs.push("Username can't be shorter than 4 characters.") 
+            }       
+            if(password.length < 8){
+                errs.push("Password can't be shorter than 8 characters.") 
+            }       
+            setErrors(errs)
+            if(errs.length > 0){
+                console.log("Nedovoljno karaktera")
+                return
+            }
+          const response = await fetch(`${API_URL}/api/v1/user/auth/login`, {
+            
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username: text,
+              password: password,
+            }),
+          });
+          console.log(response.json)
+          if (!response.ok) {
+            throw new Error('Login failed');
+          }
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+          const tkn = await response.json();
+          await AsyncStorage.setItem('token', tkn.token);
 
-      const tkn = await response.json();
-      await AsyncStorage.setItem('token', tkn.token);
+          Alert.alert('Success', 'Logged in successfully!');
 
-      Alert.alert('Success', 'Logged in successfully!');
+          router.replace('/homepage');
 
-      router.replace('/homepage');
-
-    } catch (error) {
-    }
-  };
+        } catch (error) {
+            console.log(error, "Login screen")
+        }
+      };
 
 
   return (
@@ -62,10 +82,17 @@ export default function LoginScreen() {
 
         <Pressable
             onPress={() => submit(text, password)} 
-            style={styles.buttonPrimary}
+            style={({pressed}) => [styles.buttonPrimary, {backgroundColor: pressed ? '#fff' : styles.buttonPrimary.backgroundColor}]}
             >
-            <Text style={styles.text}>Submit</Text>
+            {({ pressed }) => (
+                <Text style={[styles.text, { color: pressed ? '#151718' : styles.text.color }]}>
+                  Submit
+                </Text>
+              )}
         </Pressable>
+        {errors.map((err, index) => (
+            <Text key={index} style={styles.errorText}>{err}</Text>
+        ))}
     
     </View>
   );
@@ -88,6 +115,10 @@ const styles = StyleSheet.create({
       color:"#fff",
       fontSize: 28,
       fontWeight: "700"
+  },
+
+  burger: {
+      width: 16
   },
   placeholder: {
     color: "#fff",
@@ -118,6 +149,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 0.25,
     color: 'white',
+  },
+  errorText: {
+    fontSize: 16,
+    lineHeight: 21,
+    letterSpacing: 0.25,
+    color: 'red',
   },
   
 });
