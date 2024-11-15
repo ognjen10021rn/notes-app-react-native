@@ -8,3 +8,7 @@ export interface NoteModel {
   updatedAt: string;
   version: number;
 }
+export interface UserModel {
+  id: number;
+  username: string;
+}

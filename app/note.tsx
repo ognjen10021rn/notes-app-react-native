@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { NoteModel } from "./model";
 
 
@@ -7,11 +7,14 @@ export const Note: React.FC<{ note: NoteModel }> = ({ note }) => {
 
   return (
     <>
-        <View style={styles.note}>
+        
+        <Pressable 
+            style={({pressed}) => [ styles.note,{backgroundColor: pressed ? '#101010' : styles.note.backgroundColor}]}
+        >
             <Text style={styles.headerText}>{note.title}</Text> 
             <Text style={styles.content} numberOfLines={10} ellipsizeMode="tail">{note.content}</Text> 
             <Text style={styles.date}>{note.updatedAt}</Text>
-        </View>
+        </Pressable>
     </>
   );
 }

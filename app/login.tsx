@@ -14,7 +14,7 @@ export default function LoginScreen() {
     const navigation = useNavigation()
     useEffect(() => {
         navigation.setOptions({headerShown: false})
-    })
+    },[])
 
     const submit = async (text: string, password: string) => {
 
