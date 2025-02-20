@@ -50,9 +50,11 @@ export default function LoginScreen() {
 
           const tkn = await response.json();
           await AsyncStorage.setItem('token', tkn.token);
-
-          Alert.alert('Success', 'Logged in successfully!');
-
+          let user = parseJwt(tkn.token)
+            await AsyncStorage.setItem('user', JSON.stringify({
+                username: user.username,
+                userId: user.id
+            }))
           router.replace('/homepage');
 
         } catch (error) {
@@ -60,6 +62,18 @@ export default function LoginScreen() {
         }
       };
 
+    function parseJwt (token: string): any | undefined{
+        try{
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+            const paddedBase64 = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+
+            return JSON.parse(atob(paddedBase64));
+        }catch(e) {
+            console.log(e, "Homepage err: ", token)
+        }
+    }
 
   return (
     <View style={styles.darkTheme}>

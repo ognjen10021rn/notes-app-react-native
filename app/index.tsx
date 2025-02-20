@@ -12,7 +12,10 @@ export default function MainScreen() {
     const [loading, setLoading] = useState(true); // Add loading state
 
     useEffect(() => {
-    const checkLoginStatus = async () => {
+        _checkLoginStatus();
+  }, []);
+
+    const _checkLoginStatus = async () => {
       const token = await AsyncStorage.getItem('token');
       if (token) {
         setIsLoggedIn(true);
@@ -22,10 +25,6 @@ export default function MainScreen() {
         setIsLoggedIn(false);
       }
     };
-
-    checkLoginStatus();
-  }, []);
-
 
   return (
       <>

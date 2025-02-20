@@ -68,6 +68,7 @@ return (
 
 }
 const styles = StyleSheet.create({
+
   darkTheme: {
     flex: 1,
     display: "flex",

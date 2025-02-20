@@ -1,18 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Pressable, Image, FlatList } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent } from 'react-native';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import Menu from './menu';
 import { Note } from './note'
-import { NoteModel, UserModel } from './model';
+import { NoteModel, UserModel, UserModelDto } from './model';
 import { API_URL } from '@/paths';
+import CreateNote from './createNote';
 
 
 export default function HomePage() {
 
-    const [user, setUser] = useState<UserModel>({} as UserModel)
+    const [user, setUser] = useState<UserModelDto>({} as UserModelDto)
     const [showMenu, setShowMenu] = useState(false)
+    const [showCreateNote, setShowCreateNote] = useState(false)
     const navigation = useNavigation()
     const [notes, setNotes] = useState<NoteModel[]>([])
 
@@ -20,157 +22,46 @@ export default function HomePage() {
 
       const onRefresh = React.useCallback(() => {
         setRefreshing(true);
-        fetchUserNotes()
         setTimeout(() => {
+            fetchUserNotes(user)
+            initialize()
           setRefreshing(false);
         }, 500);
       }, []);
 
+    useEffect(() => {
+        navigation.setOptions({headerShown: false})
+        initialize()
+    },[])
 
-
-    const fetchUserNotes = async () => {
-        console.log("Fetching notes for user!")
-        const response = await fetch(`${API_URL}/api/v1/note/getAllNoteByUserId/${user.id}`, {
+    const fetchUserNotes = async (usr: UserModelDto) => {
+        console.log("Fetching notes for user!", usr)
+        await fetch(`${API_URL}/api/v1/note/getAllNoteByUserId/${usr.userId}`, {
             method: "GET",
             headers: {
-                "Authorization": `Bearer ${await AsyncStorage.getItem('token')}`
+                "Authorization": `Bearer ${await AsyncStorage.getItem("token")}`
             }
         })
         .then(res => res.json())
         .then(responseData => {
             setNotes(responseData)
+            console.log("Done fetching", responseData)
         }).catch(err => {
+            router.replace('/login')
             console.log("Fetch userNotes err: ", err)
 
         })
-        // if(response.ok){
-        //     throw new Error(response.status.toString())
-        // }
-        //
-        // response.json().then(res => {
-        //     setNotes(res)
-        //     console.log("Done fetching!")
-        // })
-
      }
 
-     // const notes2: NoteModel[] = [
-     //  {
-     //    noteId: 1,
-     //    title: 'My First Note',
-     //    adminId: 123,
-     //    content: 'This is the content of the first noteeeeeeeeeeeeeeeeeeeeeeeeeeeee.\n aaaaaaaaaaa\naaa\na\na\na\na\na\na\na\na\na\na\na\na',
-     //    isLocked: false,
-     //    createdAt: '2024-11-14T12:34:56Z',
-     //    updatedAt: '2024-11-14T14:56:00Z',
-     //    version: 1,
-     //  },
-     //  {
-     //    noteId: 2,
-     //    title: 'Second Note',
-     //    adminId: 124,
-     //    content: 'This is the content of the second note.',
-     //    isLocked: true,
-     //    createdAt: '2024-11-13T10:20:30Z',
-     //    updatedAt: '2024-11-14T15:00:00Z',
-     //    version: 2,
-     //  },
-     //  {
-     //    noteId: 3,
-     //    title: 'Third Note',
-     //    adminId: 124,
-     //    content: 'This is the content of the first noteeeeeeeeeeeeeeeeeeeeeeeeeeeee.\n aaaaaaaaaaa\naaa\na\na\na\na\na\na\na\na\na\na\na\na',
-     //    isLocked: true,
-     //    createdAt: '2024-11-13T10:20:30Z',
-     //    updatedAt: '2024-11-14T15:00:00Z',
-     //    version: 2,4
-     //  },
-     //  {
-     //    noteId: 4,
-     //    title: 'Fourth Note',
-     //    adminId: 124,
-     //    content: 'This is the content of the second note.',
-     //    isLocked: true,
-     //    createdAt: '2024-11-13T10:20:30Z',
-     //    updatedAt: '2024-11-14T15:00:00Z',
-     //    version: 2,
-     //  },
-     //  {
-     //    noteId: 5,
-     //    title: 'Fifth Note',
-     //    adminId: 124,
-     //    content: 'This is the content of the first noteeeeeeeeeeeeeeeeeeeeeeeeeeeee.\n aaaaaaaaaaa\naaa\na\na\na\na\na\na\na\na\na\na\na\na',
-     //    isLocked: true,
-     //    createdAt: '2024-11-13T10:20:30Z',
-     //    updatedAt: '2024-11-14T15:00:00Z',
-     //    version: 2,
-     //  },
-     //  {
-     //    noteId: 6,
-     //    title: 'Sixth Note',
-     //    adminId: 124,
-     //    content: 'This is the content of the second note.',
-     //    isLocked: true,
-     //    createdAt: '2024-11-13T10:20:30Z',
-     //    updatedAt: '2024-11-14T15:00:00Z',
-     //    version: 2,
-     //  },
-     //  {
-     //    noteId: 7,
-     //    title: 'Seventh Note',
-     //    adminId: 124,
-     //    content: 'This is the content of the second note.',
-     //    isLocked: true,
-     //    createdAt: '2024-11-13T10:20:30Z',
-     //    updatedAt: '2024-11-14T15:00:00Z',
-     //    version: 2,
-     //  },
-      // {
-      //   noteId: 8,
-      //   title: 'Seventh Note',
-      //   adminId: 124,
-      //   content: 'This is the content of the first noteeeeeeeeeeeeeeeeeeeeeeeeeeeee.\n aaaaaaaaaaa\naaa\na\na\na\na\na\na\na\na\na\na\na\na',
-      //   isLocked: true,
-      //   createdAt: '2024-11-13T10:20:30Z',
-      //   updatedAt: '2024-11-14T15:00:00Z',
-      //   version: 2,
-      // },
-    // ];   
-    useEffect(() => {
-        navigation.setOptions({headerShown: false})
-        usr()
-        fetchUserNotes()
-    },[])
-
-    const usr = async () => {
-        let tkn = await AsyncStorage.getItem('token')
-        let usr : any | undefined
-        if(tkn != undefined){
-            usr = parseJwt(tkn) 
-        }else{
-            router.replace('/login')
-        }
-        try{
-            setUser(usr)
-        }catch(e){
-            console.log(e, "Homepage err")
+    const initialize = async () => {
+        let userCredentials : string | null = await AsyncStorage.getItem('user');
+        if(userCredentials != null){
+            let userModel : UserModelDto = JSON.parse(userCredentials);
+            setUser(userModel)
+            await fetchUserNotes({username: userModel.username, userId: userModel.userId})
         }
     }
 
-  // parsing token so it returns an object with user info
-    function parseJwt (token: string): any | undefined{
-        try{
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-
-        const paddedBase64 = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
-        console.log("usao")
-
-        return JSON.parse(atob(paddedBase64));
-        }catch(e) {
-            console.log(e, "Homepage err: ", token)
-        }
-    }
 
   return (
     <View style={styles.darkTheme}>
@@ -187,13 +78,9 @@ export default function HomePage() {
             <FlatList 
                 data={notes}
                 renderItem={({ item }) => 
-                    <Pressable
-                        style={({pressed}) => [{backgroundColor: pressed ? '#fff' : styles.buttonPrimary.backgroundColor}]}
-                    >
                     <Note 
                         note={item}
                     />
-                    </Pressable>
 
                 }
                 keyExtractor={(item) => item.noteId.toString()}
@@ -206,10 +93,16 @@ export default function HomePage() {
               />
           </View>
           <View style={styles.createNoteContainer}>
-              <Pressable style={styles.createNoteBtn}>
-                 
+              <Pressable 
+                  style={styles.createNoteBtn}
+
+                  onPress={() => setShowCreateNote(true)}
+              >
+                    <AntDesign name="plus" size={48} color="#fff" />                 
               </Pressable>
           </View>
+          <CreateNote isShown={showCreateNote} userId={user.userId} onClose={() => setShowCreateNote(false)} />
+
     </View>
   );
 }
@@ -234,14 +127,18 @@ const styles = StyleSheet.create({
   },
   createNoteBtn: {
     borderRadius: "50%",
-    backgroundColor: "#fff",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "orange",
     width: 80,
     height: 80
 
   },
   darkTheme: {
     flex: 1,
-    backgroundColor: '#151718'
+    backgroundColor: '#151718',
+    position: "relative"
   },
   header: {
       display: "flex",
