@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
   },
   createNoteContainer: {
     display: "flex",
+    zIndex: 1,
     position: "absolute",
     bottom: "5%",
     right: "5%",
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
   header: {
       display: "flex",
       // alignItems: "flex-start",
-      paddingTop: "5%",
+      paddingTop: "15%",
       paddingLeft: "5%",
       paddingRight: "5%",
       paddingBottom: "5%",

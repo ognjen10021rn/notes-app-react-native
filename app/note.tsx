@@ -1,15 +1,26 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { NoteModel } from "./model";
+import { router, useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/core";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 
 export const Note: React.FC<{ note: NoteModel }> = ({ note }) => {
+
+    const _editNote =  (() => {
+        const navigation = useNavigation<NativeStackNavigationProp<any>>();
+        navigation.navigate("/editNote", { noteModel: note})
+
+    })
+
 
   return (
     <>
         
         <Pressable 
             style={({pressed}) => [ styles.note,{backgroundColor: pressed ? '#101010' : styles.note.backgroundColor}]}
+            onPress={() => _editNote()}
         >
             <Text style={styles.headerText}>{note.title}</Text> 
             <Text style={styles.content} numberOfLines={10} ellipsizeMode="tail">{note.content}</Text> 
