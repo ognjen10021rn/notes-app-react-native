@@ -2,25 +2,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { NoteModel } from "./model";
 import { router, useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/core";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { createNavigationContainerRef, NavigationContainer, useNavigation } from '@react-navigation/native' 
+// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+ // TODO: Fix note compopnent so it's a default export function
+ export const Note: React.FC<{ note: NoteModel }> = ({ note }) => {
 
-export const Note: React.FC<{ note: NoteModel }> = ({ note }) => {
-
-    const _editNote =  (() => {
-        const navigation = useNavigation<NativeStackNavigationProp<any>>();
-        navigation.navigate("/editNote", { noteModel: note})
-
-    })
-
-
+    const navigation = useNavigation<any>();
+    const navigationRef = createNavigationContainerRef();
+    
   return (
     <>
-        
         <Pressable 
             style={({pressed}) => [ styles.note,{backgroundColor: pressed ? '#101010' : styles.note.backgroundColor}]}
-            onPress={() => _editNote()}
+            onPress={() => {
+                if(navigationRef.isReady()){
+                    navigation.navigate('editNote')
+                }
+            }}
         >
             <Text style={styles.headerText}>{note.title}</Text> 
             <Text style={styles.content} numberOfLines={10} ellipsizeMode="tail">{note.content}</Text> 

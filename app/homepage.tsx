@@ -8,6 +8,7 @@ import { Note } from './note'
 import { NoteModel, UserModel, UserModelDto } from './model';
 import { API_URL } from '@/paths';
 import CreateNote from './createNote';
+import { NavigationContainer } from '@react-navigation/native';
 
 
 export default function HomePage() {
@@ -78,10 +79,11 @@ export default function HomePage() {
             <FlatList 
                 data={notes}
                 renderItem={({ item }) => 
+        <NavigationContainer independent={true}>
                     <Note 
                         note={item}
                     />
-
+                </NavigationContainer>
                 }
                 keyExtractor={(item) => item.noteId.toString()}
                 numColumns={2} 

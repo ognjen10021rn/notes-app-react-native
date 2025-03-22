@@ -13,12 +13,12 @@ import CreateNote from './createNote';
 type EditNoteModel =  {
     noteModel: NoteModel
 }
-export default function EditNote({navigation, route} : any) {
+export default function EditNote() {
 
 
     return (
         <>
-            <Text>{route.params.noteModel}</Text>
+            <Text>Caooo</Text>
         </>
     )
 
