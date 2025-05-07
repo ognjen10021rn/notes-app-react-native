@@ -79,7 +79,7 @@ export default function HomePage() {
             <FlatList 
                 data={notes}
                 renderItem={({ item }) => 
-        <NavigationContainer independent={true}>
+                <NavigationContainer independent={true}>
                     <Note 
                         note={item}
                     />
@@ -88,9 +88,9 @@ export default function HomePage() {
                 keyExtractor={(item) => item.noteId.toString()}
                 numColumns={2} 
                 columnWrapperStyle={styles.row}
-                  contentContainerStyle={styles.container}
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
+                contentContainerStyle={styles.container}
+                refreshing={refreshing}
+                onRefresh={onRefresh}
                 showsVerticalScrollIndicator={true}
               />
           </View>

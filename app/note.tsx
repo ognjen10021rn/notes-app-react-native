@@ -7,18 +7,16 @@ import { createNavigationContainerRef, NavigationContainer, useNavigation } from
 
  // TODO: Fix note compopnent so it's a default export function
  export const Note: React.FC<{ note: NoteModel }> = ({ note }) => {
-
-    const navigation = useNavigation<any>();
-    const navigationRef = createNavigationContainerRef();
     
   return (
     <>
         <Pressable 
             style={({pressed}) => [ styles.note,{backgroundColor: pressed ? '#101010' : styles.note.backgroundColor}]}
             onPress={() => {
-                if(navigationRef.isReady()){
-                    navigation.navigate('editNote')
-                }
+                router.push({
+                    pathname: "/editNote",
+                    params: { noteId: note.noteId },
+                });
             }}
         >
             <Text style={styles.headerText}>{note.title}</Text> 
