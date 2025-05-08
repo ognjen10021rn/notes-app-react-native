@@ -2,11 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { NoteModel } from "./model";
 import { router, useRouter } from "expo-router";
-import { createNavigationContainerRef, NavigationContainer, useNavigation } from '@react-navigation/native' 
-// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
  // TODO: Fix note compopnent so it's a default export function
- export const Note: React.FC<{ note: NoteModel }> = ({ note }) => {
+ export const Note: React.FC<{ note: NoteModel, userId: number }> = ({ note, userId }) => {
     
   return (
     <>
@@ -15,7 +13,7 @@ import { createNavigationContainerRef, NavigationContainer, useNavigation } from
             onPress={() => {
                 router.push({
                     pathname: "/editNote",
-                    params: { noteId: note.noteId },
+                    params: { noteId: note.noteId, userId: userId },
                 });
             }}
         >

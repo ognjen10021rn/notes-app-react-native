@@ -17,3 +17,15 @@ export interface UserModelDto {
   userId: number;
   username: string;
 }
+export interface EditNoteDto {
+  noteId?: number;
+  userId?: number,
+  title?: string,
+  content?: string;
+  username: string;
+}
+
+export interface Note {
+  noteId: string;
+  content: string;
+}

@@ -82,6 +82,7 @@ export default function HomePage() {
                 <NavigationContainer independent={true}>
                     <Note 
                         note={item}
+                        userId={user.userId}
                     />
                 </NavigationContainer>
                 }

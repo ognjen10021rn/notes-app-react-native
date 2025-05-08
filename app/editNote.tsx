@@ -3,20 +3,46 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput } from 'react-native';
 import Menu from './menu';
-import { Note } from './note'
-import { NoteModel, UserModel, UserModelDto } from './model';
-import { API_URL } from '@/paths';
+import { EditNoteDto, Note, NoteModel, UserModel, UserModelDto } from './model';
+import { API_URL, WEB_SOCKET_URL } from '@/paths';
 import CreateNote from './createNote';
 import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { Client } from '@stomp/stompjs';
+import { WebSocket } from 'ws';
+  import websocketService from './webSockets';
 
 
 export default function EditNote() {
     const { noteId } = useLocalSearchParams();
+    const { userId } = useLocalSearchParams();
     const [note, setNote] = useState<NoteModel | null>(null);
     const [value, onChangeText] = useState(note?.content);
     const navigation = useNavigation();
+
+    useEffect(() => {
+      websocketService.connect((newNote: Note) => {
+        // setNotes(prevNotes => [...prevNotes, newNote]);
+        console.log(newNote)
+      });
+  
+      return () => {
+        websocketService.disconnect();
+        console.log("return")
+      };
+    }, []);
+
+    const client = new Client({
+      brokerURL: `${WEB_SOCKET_URL}/ws/noteMessage`,
+      onConnect: () => {
+        client.subscribe('/topic/', message =>
+          console.log(`Received: ${message.body}`)
+        );
+        client.publish({ destination: '/topic/test01', body: 'First Message' });
+      },
+    });
+    
+    client.activate();
 
     useEffect(() => {
         if(noteId){
@@ -28,8 +54,46 @@ export default function EditNote() {
 
     const datePipe = ((str : string | undefined) => {
         if(str){
-            return format(str, 'HH:mm | dd.MM.yy')
+            return format(str, 'do MMM yyyy HH:mm')
         }
+    })
+
+    const submit = async (value : string | undefined) => {
+        // setNote({...note, content: value})
+        // const response = await fetch(`${API_URL}/api/v1/note/editNote/`, {
+        //     method: "POST",
+        //     headers: {
+        //         "Authorization" : `Bearer ${await AsyncStorage.getItem("token")}`
+        //     },
+        //     body: JSON.stringify({
+        //         userId: userId,
+        //         username: "petar",
+        //         noteId: noteId,
+        //         title: note?.title,
+        //         content: value
+                
+        //     })
+        // })
+        // console.log(response.json())
+        if(!value){
+          return;
+        }
+        const payload: EditNoteDto = {
+          noteId: Number(noteId),
+          content: value,
+          username: "petar",
+          title: note?.title,
+          userId: Number(userId)
+
+        };
+    
+        websocketService.sendMessage(payload);
+
+
+    }
+
+    const back = (() => {
+        console.log("back")
     })
 
     const fetchNoteById = async (noteId: number) => {
@@ -42,6 +106,7 @@ export default function EditNote() {
         let res = await response.json();
         if(res){
             setNote(res)
+
         }
     }
 
@@ -59,7 +124,30 @@ export default function EditNote() {
                 onChangeText={text => onChangeText(text)}
                 value={value}
                 style={styles.textInput}
+                placeholder='Tell me a note'
+
             />
+
+            <Pressable
+            onPress={() => submit(value)} 
+            style={({pressed}) => [styles.buttonPrimary, {backgroundColor: pressed ? '#fff' : styles.buttonPrimary.backgroundColor}]}
+            >
+            {({ pressed }) => (
+                <Text style={[styles.buttonText, { color: pressed ? '#151718' : styles.text.color }]}>
+                  Submit
+                </Text>
+              )}
+            </Pressable>
+            <Pressable
+            onPress={() => back()} 
+            style={({pressed}) => [styles.buttonSecondary, {backgroundColor: pressed ? '#fff' : styles.buttonSecondary.backgroundColor}]}
+            >
+            {({ pressed }) => (
+                <Text style={[styles.buttonText, { color: pressed ? '#151718' : styles.text.color }]}>
+                  Back
+                </Text>
+              )}
+            </Pressable>
 
         </View>
 
@@ -125,7 +213,7 @@ const styles = StyleSheet.create({
   textInput: {
     padding: 10,
     lineHeight: 20,
-    fontWeight: '400',
+    fontWeight: '500',
     letterSpacing: 0.25,
     color: 'white',
     flex: 1,
@@ -154,10 +242,27 @@ const styles = StyleSheet.create({
     elevation: 3,
     backgroundColor: 'orange',
   },
+  buttonSecondary: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    margin: 4,
+    minWidth: "30%",
+    borderRadius: 4,
+    elevation: 3,
+    backgroundColor: '#444',
+  },
   text: {
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 20,
     fontWeight: '300',
+    letterSpacing: 0.25,
+    color: 'white',
+  },
+  buttonText: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: 'bold',
     letterSpacing: 0.25,
     color: 'white',
   },

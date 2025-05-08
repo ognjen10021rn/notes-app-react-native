@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomePage from './homepage';
 import LoginScreen from './login';
+import * as encoding from 'text-encoding';
+
 
 export default function MainScreen() {
     
