@@ -52,7 +52,6 @@ export default function EditNote() {
         const payload: EditNoteDto = {
           noteId: Number(noteId),
           content: note?.content,
-          username: "petar",
           title: note?.title,
           userId: Number(userId)
 
