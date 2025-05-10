@@ -1,13 +1,13 @@
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { EditNoteDto, Note } from './model';
+import { EditNoteDto, Note, NoteModel } from './model';
 import { WEB_SOCKET_URL } from '@/paths';
 
 
 class WebSocketService {
   private client: Client | null = null;
 
-  connect(onMessageCallback: (note: Note) => void): void {
+  connect(noteId : any, onNoteUpdate: (note: NoteModel) => void): void {
     const socket = new SockJS(`${WEB_SOCKET_URL}/noteMessage`);
 
     this.client = new Client({
@@ -18,15 +18,14 @@ class WebSocketService {
         console.log('WebSocket connected');
 
         this.client?.subscribe(
-          `/${"petar"}/queue/position-updates`,
+          `/topic/note/${noteId}`,
           (message: IMessage) => {
-            const body: Note = JSON.parse(message.body);
-            console.log(message.body, "bodyyyyyyyyyy")
-            onMessageCallback(body);
+            const body: NoteModel = JSON.parse(message.body);
+            onNoteUpdate(body);
           }
         );
       },
-      onStompError: (frame) => {
+      onStompError: (frame: any) => {
         console.error('Broker error:', frame.headers['message']);
         console.error('Details:', frame.body);
       },

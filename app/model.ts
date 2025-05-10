@@ -22,10 +22,9 @@ export interface EditNoteDto {
   userId?: number,
   title?: string,
   content?: string;
-  username: string;
 }
 
 export interface Note {
   noteId: string;
-  content: string;
+  content: string | undefined;
 }

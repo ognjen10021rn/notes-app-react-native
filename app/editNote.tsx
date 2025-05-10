@@ -8,9 +8,7 @@ import { API_URL, WEB_SOCKET_URL } from '@/paths';
 import CreateNote from './createNote';
 import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Client } from '@stomp/stompjs';
-import { WebSocket } from 'ws';
-  import websocketService from './webSockets';
+import websocketService from './webSockets';
 
 
 export default function EditNote() {
@@ -21,9 +19,9 @@ export default function EditNote() {
     const navigation = useNavigation();
 
     useEffect(() => {
-      websocketService.connect((newNote: Note) => {
-        // setNotes(prevNotes => [...prevNotes, newNote]);
-        console.log(newNote)
+      websocketService.connect(noteId, (newNote : NoteModel) => {
+          // console.log(newNote, "stigao je novi note")
+          setNote(newNote)
       });
   
       return () => {
@@ -31,18 +29,6 @@ export default function EditNote() {
         console.log("return")
       };
     }, []);
-
-    const client = new Client({
-      brokerURL: `${WEB_SOCKET_URL}/ws/noteMessage`,
-      onConnect: () => {
-        client.subscribe('/topic/', message =>
-          console.log(`Received: ${message.body}`)
-        );
-        client.publish({ destination: '/topic/test01', body: 'First Message' });
-      },
-    });
-    
-    client.activate();
 
     useEffect(() => {
         if(noteId){
@@ -58,29 +44,14 @@ export default function EditNote() {
         }
     })
 
-    const submit = async (value : string | undefined) => {
-        // setNote({...note, content: value})
-        // const response = await fetch(`${API_URL}/api/v1/note/editNote/`, {
-        //     method: "POST",
-        //     headers: {
-        //         "Authorization" : `Bearer ${await AsyncStorage.getItem("token")}`
-        //     },
-        //     body: JSON.stringify({
-        //         userId: userId,
-        //         username: "petar",
-        //         noteId: noteId,
-        //         title: note?.title,
-        //         content: value
-                
-        //     })
-        // })
-        // console.log(response.json())
-        if(!value){
+    const submit = async () => {
+        if(!note){
           return;
         }
+        console.log(note)
         const payload: EditNoteDto = {
           noteId: Number(noteId),
-          content: value,
+          content: note?.content,
           username: "petar",
           title: note?.title,
           userId: Number(userId)
@@ -121,15 +92,17 @@ export default function EditNote() {
                 multiline
                 maxLength={1024}
                 textAlignVertical='top'
-                onChangeText={text => onChangeText(text)}
-                value={value}
+                onChangeText={(newContent) =>
+                  setNote((prev) => (prev ? { ...prev, content: newContent } : null))
+                }
+                value={note?.content || ""}
                 style={styles.textInput}
                 placeholder='Tell me a note'
 
             />
 
             <Pressable
-            onPress={() => submit(value)} 
+            onPress={() => submit()} 
             style={({pressed}) => [styles.buttonPrimary, {backgroundColor: pressed ? '#fff' : styles.buttonPrimary.backgroundColor}]}
             >
             {({ pressed }) => (
