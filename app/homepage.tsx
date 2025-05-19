@@ -9,6 +9,7 @@ import { NoteModel, UserModel, UserModelDto } from './model';
 import { API_URL } from '@/paths';
 import CreateNote from './createNote';
 import { NavigationContainer } from '@react-navigation/native';
+import MasonryList from '@react-native-seoul/masonry-list';
 
 
 export default function HomePage() {
@@ -45,8 +46,14 @@ export default function HomePage() {
         })
         .then(res => res.json())
         .then(responseData => {
-            setNotes(responseData)
-            console.log("Done fetching", responseData)
+            //set notes i sortiraj da bude najnovije
+            setNotes(responseData.sort((a : NoteModel, b: NoteModel) => {
+              const date1 = new Date(a.updatedAt);
+              const date2 = new Date(b.updatedAt);
+              return date2.getTime()-date1.getTime()
+            }
+            ))
+            // console.log("Done fetching", responseData)
         }).catch(err => {
             router.replace('/login')
             console.log("Fetch userNotes err: ", err)
@@ -64,6 +71,12 @@ export default function HomePage() {
     }
 
 
+    const refreshOnSubmit = async(showCrtNote : boolean) => {
+        setShowCreateNote(showCrtNote);
+        onRefresh()
+    }
+
+
   return (
     <View style={styles.darkTheme}>
         <View style={styles.header}>
@@ -75,20 +88,24 @@ export default function HomePage() {
            />
            <Menu isShown={showMenu} onClose={() => setShowMenu(false)}/>
         </View>
-        <View>
-            <FlatList 
-                data={notes}
-                renderItem={({ item }) => 
-                <NavigationContainer independent={true}>
+        <View
+          // ne znam zasto radi ali radi
+          // kada se koristi flex 1 popuni se samo malo
+          style={{flex: 10}}
+        >
+            <MasonryList
+                data={Array.isArray(notes) ? notes : []}
+                renderItem={({ item, i}) => {
+                  const typedItem = item as NoteModel;
+                  return (
                     <Note 
-                        note={item}
-                        userId={user.userId}
+                      note={typedItem}
+                      userId={user.userId}
                     />
-                </NavigationContainer>
-                }
+                  );
+                }}
                 keyExtractor={(item) => item.noteId.toString()}
                 numColumns={2} 
-                columnWrapperStyle={styles.row}
                 contentContainerStyle={styles.container}
                 refreshing={refreshing}
                 onRefresh={onRefresh}
@@ -104,7 +121,7 @@ export default function HomePage() {
                     <AntDesign name="plus" size={48} color="#fff" />                 
               </Pressable>
           </View>
-          <CreateNote isShown={showCreateNote} userId={user.userId} onClose={() => setShowCreateNote(false)} />
+          <CreateNote isShown={showCreateNote} userId={user.userId} onClose={() => refreshOnSubmit(false)} />
 
     </View>
   );
@@ -112,88 +129,90 @@ export default function HomePage() {
 
 
 const styles = StyleSheet.create({
+  darkTheme: {
+    flex: 1,
+    backgroundColor: '#151718',
+    position: 'relative',
+  },
+  container: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  container: {
-    paddingHorizontal: 8,
-    paddingBottom: 80,
-  },
-  createNoteContainer: {
-    display: "flex",
-    zIndex: 1,
-    position: "absolute",
-    bottom: "5%",
-    right: "5%",
-    alignItems: "flex-end",
-  },
-  createNoteBtn: {
-    borderRadius: "50%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "orange",
-    width: 80,
-    height: 80
-
-  },
-  darkTheme: {
-    flex: 1,
-    backgroundColor: '#151718',
-    position: "relative"
+    marginBottom: 16,
   },
   header: {
-      display: "flex",
-      // alignItems: "flex-start",
-      paddingTop: "15%",
-      paddingLeft: "5%",
-      paddingRight: "5%",
-      paddingBottom: "5%",
-      justifyContent: "space-between",
-      backgroundColor: "#101010",
-      flexDirection: "row",
-  },
-  row: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    backgroundColor: '#101010',
   },
   headerText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 24
-  },
-  placeholder: {
-    color: "#fff",
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 24,
   },
   input: {
-    height: 40,
-    color: "#fff",
-    borderColor: 'gray',
+    height: 48,
+    color: '#fff',
+    backgroundColor: '#2b2b2b',
+    borderColor: '#444',
     borderWidth: 1,
-    minWidth: "60%",
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    margin: 4,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    flex: 1,
+  },
+  placeholder: {
+    color: '#aaa',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
   },
   buttonPrimary: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    margin: 4,
-    minWidth: "30%",
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: 'orange',
+    elevation: 4,
   },
   text: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 'bold',
-    letterSpacing: 0.25,
-    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
-  
+  createNoteContainer: {
+    position: 'absolute',
+    bottom: '5%',
+    right: '5%',
+    alignItems: 'flex-end',
+    zIndex: 1,
+  },
+  createNoteBtn: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFA500',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
 });
+
 
 

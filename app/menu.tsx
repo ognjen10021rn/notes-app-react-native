@@ -1,7 +1,8 @@
 import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { Modal, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Modal, Pressable, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
 
 
 type MenuProps = {
@@ -9,7 +10,19 @@ type MenuProps = {
   onClose: () => void;
 };
 export default function Menu({isShown, onClose}: MenuProps){
-    
+  const slideAnim = useRef(new Animated.Value(200)).current; // Start below screen
+
+    useEffect(() => {
+      if (isShown) {
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        slideAnim.setValue(200); // Reset when closed
+      }
+    }, [isShown]); 
     const logout = async () => {
         try {
             await AsyncStorage.removeItem('token');
@@ -23,99 +36,89 @@ export default function Menu({isShown, onClose}: MenuProps){
 
     }
 
-return (
+  return (
     <Modal
-      animationType="slide"
+      animationType="none"
       transparent={true}
       visible={isShown}
       onRequestClose={onClose}
     >
-    <TouchableWithoutFeedback onPress={onClose} >
-      <View style={styles.darkTheme}>
-      <TouchableWithoutFeedback>
-        <View style={styles.menu}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Menu</Text>
-            <Ionicons name="close" size={32} color="#fff" onPress={onClose} />
-          </View>
-        <Pressable
-            onPress={() => profile()} 
-            >
-                {({ pressed }) => (
-                <Text style={[styles.text, { color: pressed ? styles.buttonPrimary.backgroundColor : styles.text.color }]}>
-                <Feather name="user" size={16} style={[styles.icon, {color: pressed ? styles.buttonPrimary.backgroundColor: styles.icon.color}]} />
-                  Profile
-                </Text>
-              )}
-        </Pressable>
-        <Pressable
-            onPress={() => logout()} 
-            >
-            {({ pressed }) => (
-                <Text style={[styles.text, { color: pressed ? styles.buttonPrimary.backgroundColor : styles.text.color }]}>
-                <MaterialIcons name="logout" size={16} style={[styles.icon, {color: pressed ? styles.buttonPrimary.backgroundColor: styles.icon.color}]} />
-                  Logout
-                </Text>
-              )}
-        </Pressable>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.darkTheme}>
+          <TouchableWithoutFeedback>
+            {/* <View style={styles.menu}> */}
+            <Animated.View style={[styles.menu, { transform: [{ translateY: slideAnim }] }]}>
+              <View style={styles.header}>
+                <Text style={styles.headerText}>Menu</Text>
+                <Ionicons name="close" size={28} color="#fff" onPress={onClose} />
+              </View>
+
+              <Pressable onPress={profile} style={({ pressed }) => [
+                styles.menuItem,
+                pressed && styles.menuItemPressed
+              ]}>
+                <Feather name="user" size={20} style={styles.icon} />
+                <Text style={styles.menuItemText}>Profile</Text>
+              </Pressable>
+
+              <Pressable onPress={logout} style={({ pressed }) => [
+                styles.menuItem,
+                pressed && styles.menuItemPressed
+              ]}>
+                <MaterialIcons name="logout" size={20} style={styles.icon} />
+                <Text style={styles.menuItemText}>Logout</Text>
+              </Pressable>
+            </Animated.View>
+          </TouchableWithoutFeedback>
         </View>
-        </TouchableWithoutFeedback>
-      </View>
       </TouchableWithoutFeedback>
     </Modal>
   );
 
 
 }
-const styles = StyleSheet.create({
 
+const styles = StyleSheet.create({
   darkTheme: {
     flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginBottom: "5%"
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   menu: {
-    backgroundColor: "#282828",
-    borderRadius: 8,
-    width:"90%",
-    height: "60%",
-    padding: 12,
-    
+    backgroundColor: '#282828',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    paddingBottom: 32,
   },
   header: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginVertical: 8
-  },
-  icon: {
-    color: "white",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   headerText: {
-      fontSize: 24,
-      color: "#fff",
-      fontWeight: "500"
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
   },
-  buttonPrimary: {
+  icon: {
+    color: '#fff',
+    marginRight: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    margin: 4,
-    minWidth: "30%",
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: 'orange',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
-  text: {
+  menuItemPressed: {
+    backgroundColor: '#3a3a3a',
+  },
+  menuItemText: {
     fontSize: 16,
-    lineHeight: 20,
+    color: '#fff',
     fontWeight: '500',
-    letterSpacing: 0.25,
-    color: 'white',
-    marginVertical: 8
-  }
+  },
 });

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from "react-native";
 import { UserModel, UserModelDto } from "./model";
 import { API_URL } from '@/paths';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -18,11 +18,23 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
     const [showMenu, setShowMenu] = useState(false)
     const [usersList, setUsersList] = useState<UserModelDto[]>([])
     const [filteredUsers, setFilteredUsers] = useState<UserModelDto[]>([])    
+    const slideAnim = useRef(new Animated.Value(200)).current; // Start below screen
 
     useEffect(() => {
-        // fetchUsers()
+      if (isShown) {
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        slideAnim.setValue(200); // Reset when closed
+      }
+    }, [isShown]); 
+    // useEffect(() => {
+    //     // fetchUsers()
 
-    },[userId, isShown])
+    // },[userId, isShown])
 
 
     const fetchUsers = async () => {
@@ -48,13 +60,16 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
         setFilteredUsers([...filteredUsers, user])
     }
     const removeAddedUser = (user: UserModelDto) => {
-        setFilteredUsers([...filteredUsers, user])
+        // setFilteredUsers([...filteredUsers, user])
+        let filter = filteredUsers.filter(val => val.username !== user.username)
+        setFilteredUsers(filter)
+
     }
 
 
     const submit = async (titl : string) => {
-        console.log(userId, await AsyncStorage.getItem('token'))
-        console.log(titl, filteredUsers.map(user => user.userId))
+        // console.log(userId, await AsyncStorage.getItem('token'))
+        // console.log(titl, filteredUsers.map(user => user.userId))
         await fetch(`${API_URL}/api/v1/note/createNote/${userId}`, {
             method: 'POST',
             headers: {
@@ -73,9 +88,18 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
             setFilteredUsers([])
             setUsersList([])
             setTitle('')
+            setShowMenu(false)
+            // stavlja funkciju da pokazuje na void pa se zatvori
+            onClose()
         })
         .catch(err => {
             console.log(err, "Create note error!")
+            setFilteredUsers([])
+            setUsersList([])
+            setTitle('')
+            setShowMenu(false)
+            // stavlja funkciju da pokazuje na void pa se zatvori
+            onClose()
         })
     }
 
@@ -83,14 +107,14 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
         if(str.length > 8){
            return (str.slice(8) + "...")
         }else{
-            return str;
+            return str + "  x";
         }
     }
 
     return(
         <SafeAreaView style={{flex: 1}}>
         <Modal
-          animationType="slide"
+          animationType="none"
           transparent={true}
           visible={isShown}
           onRequestClose={onClose}
@@ -98,7 +122,7 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
         <TouchableWithoutFeedback onPress={onClose} >
           <View style={styles.darkTheme}>
           <TouchableWithoutFeedback>
-            <View style={styles.container}>
+            <Animated.View style={[styles.container, { transform: [{ translateY: slideAnim }] }]}>
             <ScrollView style={styles.modalContainer}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ flexGrow: 1}}
@@ -179,7 +203,7 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
                 </Pressable>
                 </View>
             </ScrollView>
-            </View>
+            </Animated.View>
             </TouchableWithoutFeedback>
           </View>
           </TouchableWithoutFeedback>
@@ -192,101 +216,88 @@ export default function CreateNote({isShown, userId, onClose}: CreateNoteProps){
 const styles = StyleSheet.create({
   darkTheme: {
     flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: "5%"
-  },
-
-  modalContainer: {
-      flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   container: {
-    backgroundColor: "#282828",
-    flex: 1,
-    borderRadius: 8,
-    width:"80%",
-    minHeight: "60%",
-    maxHeight: "70%",
-    padding: 12,
-    
+    backgroundColor: '#1f1f1f',
+    borderRadius: 16,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 10,
   },
-  searchUsers: {
-    display: "flex",
-    flexDirection: "column",
-    marginBottom: 4,
-    height: 30,
-    // minHeight: "20%",
-    maxHeight: "60%",
-    backgroundColor: "#181818",
-    padding: 4,
-    borderRadius: 8
-
-  },
-  usersContainter: {
-    padding: 4,
-    borderColor: "red",
-  },
-  addedUserItem: {
-    padding: 4,
-    maxWidth: "35%",
-  },
-
-  addedUsers: {
-    padding: 4,
-    display: "flex",
-    maxHeight: "20%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    backgroundColor: "black",
-    
-  },
-  input: {
-    height: 40,
-    color: "#fff",
-    borderColor: 'gray',
-    borderWidth: 1,
-    minWidth: "60%",
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    margin: 4,
+  modalContainer: {
+    flexGrow: 1,
   },
   header: {
-    borderWidth: 1,
-    borderColor: "#282828",
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8
-  },
-  icon: {
-    color: "white",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   headerText: {
-      fontSize: 24,
-      color: "#fff",
-      fontWeight: "500"
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  input: {
+    height: 48,
+    backgroundColor: '#2b2b2b',
+    color: '#fff',
+    borderColor: '#444',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+  searchUsers: {
+    maxHeight: 150,
+    backgroundColor: '#2c2c2c',
+    borderRadius: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  usersContainter: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderBottomColor: '#444',
+    borderBottomWidth: 1,
+  },
+  addedUsers: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+    gap: 8,
+  },
+  addedUserItem: {
+    backgroundColor: '#ff9800',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 6,
   },
   buttonPrimary: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    margin: 4,
-    minWidth: "60%",
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: 'orange',
+    marginTop: 16,
   },
   text: {
+    color: '#fff',
     fontSize: 16,
-    lineHeight: 20,
     fontWeight: '500',
-    letterSpacing: 0.25,
-    color: 'white',
-    marginVertical: 8
-  }
-})
+  },
+});
+
 
 
 

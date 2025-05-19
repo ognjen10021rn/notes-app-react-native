@@ -1,7 +1,7 @@
 
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput } from 'react-native';
+import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput, Platform } from 'react-native';
 import Menu from './menu';
 import { EditNoteDto, Note, NoteModel, UserModel, UserModelDto } from './model';
 import { API_URL, WEB_SOCKET_URL } from '@/paths';
@@ -63,6 +63,7 @@ export default function EditNote() {
     }
 
     const back = (() => {
+        // TODO: add back
         console.log("back")
     })
 
@@ -81,162 +82,120 @@ export default function EditNote() {
     }
 
     return (
-        <View style={styles.darkTheme}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>{note?.title}</Text> 
-                <Text style={styles.text}>{datePipe(note?.updatedAt)}</Text> 
-            </View>
-            <TextInput
-                editable
-                multiline
-                maxLength={1024}
-                textAlignVertical='top'
-                onChangeText={(newContent) =>
-                  setNote((prev) => (prev ? { ...prev, content: newContent } : null))
-                }
-                value={note?.content || ""}
-                style={styles.textInput}
-                placeholder='Tell me a note'
 
-            />
-
-            <Pressable
-            onPress={() => submit()} 
-            style={({pressed}) => [styles.buttonPrimary, {backgroundColor: pressed ? '#fff' : styles.buttonPrimary.backgroundColor}]}
-            >
-            {({ pressed }) => (
-                <Text style={[styles.buttonText, { color: pressed ? '#151718' : styles.text.color }]}>
-                  Submit
-                </Text>
-              )}
-            </Pressable>
-            <Pressable
-            onPress={() => back()} 
-            style={({pressed}) => [styles.buttonSecondary, {backgroundColor: pressed ? '#fff' : styles.buttonSecondary.backgroundColor}]}
-            >
-            {({ pressed }) => (
-                <Text style={[styles.buttonText, { color: pressed ? '#151718' : styles.text.color }]}>
-                  Back
-                </Text>
-              )}
-            </Pressable>
-
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={80}
+      >
+      <View style={styles.darkTheme}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerText}>{note?.title || "Untitled"}</Text>
+            <Text style={styles.dateText}>{datePipe(note?.updatedAt)}</Text>
+          </View>
         </View>
-
-    )
+    
+        <View style={styles.contentContainer}>
+          <TextInput
+            editable
+            multiline
+            maxLength={1024}
+            textAlignVertical="top"
+            onChangeText={(newContent) =>
+              setNote((prev) => (prev ? { ...prev, content: newContent } : null))
+            }
+            value={note?.content || ""}
+            style={styles.textInput}
+            placeholder="Tell me a note"
+            placeholderTextColor="#888"
+          />
+        </View>
+          <View style={styles.buttonGroup}>
+            <Pressable onPress={submit} style={({ pressed }) => [
+              styles.buttonPrimary,
+              pressed && styles.buttonPressed
+            ]}>
+              <Text style={styles.buttonText}>Submit</Text>
+            </Pressable>
+      
+            <Pressable onPress={back} style={({ pressed }) => [
+              styles.buttonSecondary,
+              pressed && styles.buttonPressedSecondary
+            ]}>
+              <Text style={styles.buttonText}>Back</Text>
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>  
+    );
+    
 
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  container: {
-    paddingHorizontal: 8,
-    paddingBottom: 80,
-  },
-  createNoteContainer: {
-    display: "flex",
-    zIndex: 1,
-    position: "absolute",
-    bottom: "5%",
-    right: "5%",
-    alignItems: "flex-end",
-  },
-  createNoteBtn: {
-    borderRadius: "50%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "orange",
-    width: 80,
-    height: 80
-
-  },
   darkTheme: {
     flex: 1,
     backgroundColor: '#151718',
-    position: "relative"
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
   header: {
-      display: "flex",
-      alignItems: "center",
-      paddingTop: "15%",
-      paddingLeft: "5%",
-      paddingRight: "5%",
-      paddingBottom: "5%",
-      justifyContent: "space-between",
-      backgroundColor: "#101010",
-      flexDirection: "row",
-  },
-  row: {
-    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   headerText: {
     color: "#fff",
-    fontWeight: "600",
-    fontSize: 24
+    fontWeight: "700",
+    fontSize: 24,
   },
-  placeholder: {
-    color: "#fff",
+  dateText: {
+    color: "#999",
+    fontSize: 14,
+    marginTop: 4,
+  },
+  contentContainer: {
+    flex: 1,
+    marginBottom: 20,
   },
   textInput: {
-    padding: 10,
-    lineHeight: 20,
-    fontWeight: '500',
-    letterSpacing: 0.25,
-    color: 'white',
     flex: 1,
-    fontSize: 16,
-    alignItems: 'stretch',
-    textAlignVertical: 'top',
-    backgroundColor: "#333",
-  },
-  input: {
-    height: 40,
+    backgroundColor: "#262626",
+    padding: 16,
+    borderRadius: 4,
     color: "#fff",
-    borderColor: 'gray',
-    borderWidth: 1,
-    minWidth: "60%",
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    margin: 4,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 20,
   },
   buttonPrimary: {
+    flex: 1,
+    backgroundColor: "orange",
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    margin: 4,
-    minWidth: "30%",
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: 'orange',
   },
   buttonSecondary: {
+    flex: 1,
+    backgroundColor: "#333",
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    margin: 4,
-    minWidth: "30%",
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: '#444',
   },
-  text: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '300',
-    letterSpacing: 0.25,
-    color: 'white',
+  buttonPressed: {
+    backgroundColor: "#ffcc80",
+  },
+  buttonPressedSecondary: {
+    backgroundColor: "#555",
   },
   buttonText: {
     fontSize: 16,
-    lineHeight: 21,
-    fontWeight: 'bold',
-    letterSpacing: 0.25,
-    color: 'white',
+    fontWeight: "600",
+    color: "#fff",
   },
-  
 });
+
