@@ -3,7 +3,7 @@ import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput, Platform } from 'react-native';
 import Menu from './menu';
-import { EditNoteDto, Note, NoteModel, UserModel, UserModelDto } from './model';
+import { EditNoteDto, Note, NoteModel, UserModel, UserModelDto } from '../assets/model';
 import { API_URL, WEB_SOCKET_URL } from '@/paths';
 import CreateNote from './createNote';
 import { format } from 'date-fns';

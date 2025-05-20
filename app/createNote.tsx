@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from "react-native";
-import { UserModel, UserModelDto } from "./model";
+import { UserModel, UserModelDto } from "../assets/model";
 import { API_URL } from '@/paths';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 

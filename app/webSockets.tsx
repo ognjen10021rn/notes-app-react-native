@@ -1,6 +1,6 @@
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { EditNoteDto, Note, NoteModel } from './model';
+import { EditNoteDto, Note, NoteModel } from '../assets/model';
 import { WEB_SOCKET_URL } from '@/paths';
 
 

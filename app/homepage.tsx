@@ -1,31 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useNavigation } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import Menu from './menu';
-import { Note } from './note'
-import { NoteModel, UserModel, UserModelDto } from './model';
+import { NoteModel, UserModel, UserModelDto } from '../assets/model';
 import { API_URL } from '@/paths';
 import CreateNote from './createNote';
 import { NavigationContainer } from '@react-navigation/native';
 import MasonryList from '@react-native-seoul/masonry-list';
+import Note from './note';
 
 
 export default function HomePage() {
 
-    const [user, setUser] = useState<UserModelDto>({} as UserModelDto)
-    const [showMenu, setShowMenu] = useState(false)
-    const [showCreateNote, setShowCreateNote] = useState(false)
-    const navigation = useNavigation()
-    const [notes, setNotes] = useState<NoteModel[]>([])
+    const [user, setUser] = useState<UserModelDto>({} as UserModelDto);
+    const [showMenu, setShowMenu] = useState(false);
+    const [showCreateNote, setShowCreateNote] = useState(false);
+    const navigation = useNavigation();
+    const [notes, setNotes] = useState<NoteModel[]>([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [numberOfMenus, setNumberOfMenus] = useState(0);
 
-    const [refreshing, setRefreshing] = React.useState(false);
-
-      const onRefresh = React.useCallback(() => {
+      const onRefresh = useCallback(() => {
         setRefreshing(true);
         setTimeout(() => {
-            fetchUserNotes(user)
+            // fetchUserNotes(user)
             initialize()
           setRefreshing(false);
         }, 500);
@@ -38,6 +38,9 @@ export default function HomePage() {
 
     const fetchUserNotes = async (usr: UserModelDto) => {
         console.log("Fetching notes for user!", usr)
+        if(!usr.userId){
+          return
+        }
         await fetch(`${API_URL}/api/v1/note/getAllNoteByUserId/${usr.userId}`, {
             method: "GET",
             headers: {
@@ -47,12 +50,18 @@ export default function HomePage() {
         .then(res => res.json())
         .then(responseData => {
             //set notes i sortiraj da bude najnovije
-            setNotes(responseData.sort((a : NoteModel, b: NoteModel) => {
-              const date1 = new Date(a.updatedAt);
-              const date2 = new Date(b.updatedAt);
-              return date2.getTime()-date1.getTime()
-            }
+            // crashuje ako pokusa da sortira a prazan je 
+            if(notes.length > 0){
+              setNotes(responseData.sort((a : NoteModel, b: NoteModel) => {
+                const date1 = new Date(a.updatedAt);
+                const date2 = new Date(b.updatedAt);
+                return date2.getTime()-date1.getTime()
+              }
             ))
+            }
+            else{
+              setNotes(responseData)
+            }
             // console.log("Done fetching", responseData)
         }).catch(err => {
             router.replace('/login')
@@ -73,7 +82,7 @@ export default function HomePage() {
 
     const refreshOnSubmit = async(showCrtNote : boolean) => {
         setShowCreateNote(showCrtNote);
-        onRefresh()
+        onRefresh();
     }
 
 
@@ -101,6 +110,26 @@ export default function HomePage() {
                     <Note 
                       note={typedItem}
                       userId={user.userId}
+                      onLongPress={(numberOfModals) => {
+                        console.log(numberOfModals)
+                        console.log(numberOfModals, " nmrOf modals")
+                        setNumberOfMenus(numberOfMenus+numberOfModals)
+                        console.log(numberOfMenus, " after")
+                        // if(numberOfModals === 1){
+                        //   console.log("usao 1")
+                        //   console.log(numberOfMenus, "before")
+                        //   setNumberOfMenus(numberOfMenus+1)
+                        // }
+                        // if(numberOfModals === -1){
+                        //   console.log("usao -1")
+                        //   console.log(numberOfMenus, "before")
+                        //   setNumberOfMenus(numberOfMenus-1)
+                        // }
+                        // console.log(numberOfMenus)
+                        // setNumberOfMenus(Number(numberOfModals)+numberOfMenus)
+                        // console.log(numberOfMenus, " After")
+                      }
+                      }
                     />
                   );
                 }}

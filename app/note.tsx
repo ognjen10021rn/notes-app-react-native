@@ -1,14 +1,36 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { NoteModel } from "./model";
+import { NoteModel } from "../assets/model";
 import { router, useRouter } from "expo-router";
 import { useState } from "react";
+import Options from "./options";
 
  // TODO: Fix note compopnent so it's a default export function
- export const Note: React.FC<{ note: NoteModel, userId: number }> = ({ note, userId }) => {
+ type NoteProps = {
+  note: NoteModel;
+  userId: number;
+  onLongPress: (numberOfModals: number) => void;
+ }
+ export default function Note( {note, userId, onLongPress} : NoteProps) {
 
-    const [showModal, setShowModal] = useState(true)
+    const [showModal, setShowModal] = useState(false);
+    const [isModalShownNumber, setIsModalShownNumber] = useState(0);
     
     return (
+        <View>
+        {
+          showModal && (
+            <Options
+              isShown={showModal}
+              userId={userId}
+              noteId={note.noteId}
+              onClose={() => {
+                setShowModal(false)
+                onLongPress(-1)
+              }
+              }
+            />
+          )
+        }
         <Pressable
           style={({ pressed }) => [
             styles.note,
@@ -21,7 +43,11 @@ import { useState } from "react";
             });
           }}
           onLongPress={() => {
-            console.log("loongpress")
+            if(showModal){
+              return;
+            }
+            setShowModal(true)
+            onLongPress(1)
           }}
         // ne stavljamo press out jer ne zelimo da se zatvori kada pustimo dugme
         //   onPressOut={() => {
@@ -34,6 +60,7 @@ import { useState } from "react";
           </Text>
           <Text style={styles.date}>{formatDate(note.updatedAt)}</Text>
         </Pressable>
+        </View>
       );
 }
 const formatDate = (iso: string) => {
@@ -57,6 +84,7 @@ const styles = StyleSheet.create({
       borderWidth: 1,
       shadowColor: '#000',
       shadowOffset: { width: 3, height: 4 },
+      position: 'relative',
       shadowOpacity: 0.5,
       shadowRadius: 6,
       elevation: 6,
