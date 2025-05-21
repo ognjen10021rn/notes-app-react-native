@@ -4,6 +4,7 @@ export interface NoteModel {
   adminId: number;
   content: string;
   isLocked: boolean;
+  isDeleted: boolean;
   createdAt: string; // Use `string` for ISO date format from API, can be `Date` if parsed
   updatedAt: string;
   version: number;

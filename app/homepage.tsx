@@ -20,7 +20,7 @@ export default function HomePage() {
     const navigation = useNavigation();
     const [notes, setNotes] = useState<NoteModel[]>([]);
     const [refreshing, setRefreshing] = useState(false);
-    const [numberOfMenus, setNumberOfMenus] = useState(0);
+    const [ops, setOpts] = useState<any[]>([])
 
       const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -51,18 +51,35 @@ export default function HomePage() {
         .then(responseData => {
             //set notes i sortiraj da bude najnovije
             // crashuje ako pokusa da sortira a prazan je 
-            if(notes.length > 0){
+            console.log(responseData)
+            if(responseData.length > 0){
               setNotes(responseData.sort((a : NoteModel, b: NoteModel) => {
                 const date1 = new Date(a.updatedAt);
                 const date2 = new Date(b.updatedAt);
                 return date2.getTime()-date1.getTime()
               }
-            ))
+            ).filter((item: NoteModel) => !item.isDeleted))
+            let optss = []
+            for(let note of responseData){
+              optss.push({
+                id: note.noteId,
+                isShown: false
+              })
+            }
+            setOpts(optss)
             }
             else{
               setNotes(responseData)
+              let optss = []
+              for(let note of responseData){
+                optss.push({
+                  id: note.noteId,
+                  isShown: false
+                })
+              }
+              setOpts(optss)
             }
-            // console.log("Done fetching", responseData)
+            console.log("Done fetching", responseData)
         }).catch(err => {
             router.replace('/login')
             console.log("Fetch userNotes err: ", err)
@@ -106,30 +123,34 @@ export default function HomePage() {
                 data={Array.isArray(notes) ? notes : []}
                 renderItem={({ item, i}) => {
                   const typedItem = item as NoteModel;
+
+                  // setOptions([...options, option])
+                  // setOpts([...ops, option])
+                  // console.log(option, 2)
                   return (
                     <Note 
                       note={typedItem}
+                      key={typedItem.noteId}
                       userId={user.userId}
-                      onLongPress={(numberOfModals) => {
-                        console.log(numberOfModals)
-                        console.log(numberOfModals, " nmrOf modals")
-                        setNumberOfMenus(numberOfMenus+numberOfModals)
-                        console.log(numberOfMenus, " after")
-                        // if(numberOfModals === 1){
-                        //   console.log("usao 1")
-                        //   console.log(numberOfMenus, "before")
-                        //   setNumberOfMenus(numberOfMenus+1)
-                        // }
-                        // if(numberOfModals === -1){
-                        //   console.log("usao -1")
-                        //   console.log(numberOfMenus, "before")
-                        //   setNumberOfMenus(numberOfMenus-1)
-                        // }
-                        // console.log(numberOfMenus)
-                        // setNumberOfMenus(Number(numberOfModals)+numberOfMenus)
-                        // console.log(numberOfMenus, " After")
+                      onLongPress={(id) => {
+                          console.log(id)
+                          setOpts((prev) =>
+                            prev.map((ob) => {
+                              if (id < 0) {
+                                return { ...ob, isShown: false };
+                              }
+                              return {
+                                ...ob,
+                                isShown: ob.id === id,
+                                
+                              };
+                            })
+                          );
+                          console.log(ops)
+
                       }
                       }
+                      showModalNote={ops.find((ele) => ele.id === typedItem.noteId)}
                     />
                   );
                 }}

@@ -9,50 +9,41 @@ import Options from "./options";
   note: NoteModel;
   userId: number;
   onLongPress: (numberOfModals: number) => void;
+  showModalNote: any;
  }
- export default function Note( {note, userId, onLongPress} : NoteProps) {
+ export default function Note( {note, userId, onLongPress, showModalNote} : NoteProps) {
 
-    const [showModal, setShowModal] = useState(false);
+    // const [showModal, setShowModal] = useState(false);
     const [isModalShownNumber, setIsModalShownNumber] = useState(0);
     
     return (
         <View>
-        {
-          showModal && (
-            <Options
-              isShown={showModal}
-              userId={userId}
-              noteId={note.noteId}
-              onClose={() => {
-                setShowModal(false)
-                onLongPress(-1)
-              }
-              }
-            />
-          )
-        }
+        {showModalNote?.isShown && (
+          <Options
+            isShown={showModalNote.isShown}
+            userId={userId}
+            noteId={note.noteId}
+            onClose={() => {
+              onLongPress(-1);
+            }}
+          />
+        )}
         <Pressable
           style={({ pressed }) => [
             styles.note,
             { backgroundColor: pressed ? '#2a2a2a' : '#333' },
           ]}
           onPress={() => {
+            // onLongPress(-1)
             router.push({
               pathname: '/editNote',
               params: { noteId: note.noteId, userId: userId },
             });
           }}
           onLongPress={() => {
-            if(showModal){
-              return;
-            }
-            setShowModal(true)
-            onLongPress(1)
+            // setShowModal(true)
+            onLongPress(note.noteId)
           }}
-        // ne stavljamo press out jer ne zelimo da se zatvori kada pustimo dugme
-        //   onPressOut={() => {
-        //     console.log("pressout")
-        //   }}
         >
           <Text style={styles.title}>{note.title || "Untitled"}</Text>
           <Text style={styles.content} numberOfLines={10} ellipsizeMode="tail">
