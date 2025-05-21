@@ -9,6 +9,9 @@ import CreateNote from './createNote';
 import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import websocketService from './webSockets';
+import { FontAwesome6 } from '@expo/vector-icons';
+import UserHeader from './userHeader';
+import UserAvatars from './userAvatars';
 
 
 export default function EditNote() {
@@ -94,6 +97,44 @@ export default function EditNote() {
             <Text style={styles.headerText}>{note?.title || "Untitled"}</Text>
             <Text style={styles.dateText}>{datePipe(note?.updatedAt)}</Text>
           </View>
+          <View>
+            <UserAvatars 
+              users={[
+                {
+                  id: 1,
+                  username: "ogisa"
+                },
+                {
+                  id: 2,
+                  username: "pera"
+                },
+                {
+                  id: 3,
+                  username: "zika"
+                },
+                {
+                  id: 4,
+                  username: "mika"
+                },
+                {
+                  id: 5,
+                  username: "luka"
+                },
+                {
+                  id: 6,
+                  username: "wluka"
+                }
+
+
+
+
+            ]
+            }
+              onAddUser={() => console.log("added")}
+              onRemoveUser={() => console.log("removed")}
+            />
+            {/* <FontAwesome6 name="user-plus" size={16} color="#fff" /> */}
+          </View>
         </View>
     
         <View style={styles.contentContainer}>
@@ -142,6 +183,10 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 16,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
   },
   headerText: {
     color: "#fff",
