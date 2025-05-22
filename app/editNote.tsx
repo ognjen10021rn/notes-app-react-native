@@ -1,7 +1,7 @@
 
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput, Platform } from 'react-native';
+import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput, Platform, ScrollView } from 'react-native';
 import Menu from './menu';
 import { EditNoteDto, Note, NoteModel, UserModel, UserModelDto } from '../assets/model';
 import { API_URL, WEB_SOCKET_URL } from '@/paths';
@@ -12,14 +12,18 @@ import websocketService from './webSockets';
 import { FontAwesome6 } from '@expo/vector-icons';
 import UserHeader from './userHeader';
 import UserAvatars from './userAvatars';
+import AddRemoveUsersFromNote from './addRemoveUsersFromNote';
 
 
 export default function EditNote() {
     const { noteId } = useLocalSearchParams();
     const { userId } = useLocalSearchParams();
     const [note, setNote] = useState<NoteModel | null>(null);
-    const [value, onChangeText] = useState(note?.content);
     const navigation = useNavigation();
+    const [showMenu, setShowMenu] = useState(false)
+    const [usersList, setUsersList] = useState<UserModelDto[]>([])
+    const [filteredUsers, setFilteredUsers] = useState<UserModelDto[]>([])    
+    const [users, setUsers] = useState('')
 
     useEffect(() => {
       websocketService.connect(noteId, (newNote : NoteModel) => {
@@ -84,13 +88,42 @@ export default function EditNote() {
         }
     }
 
+    const addUserToNote = (user: UserModelDto) => {
+        setFilteredUsers([...filteredUsers, user])
+    }
+    const removeAddedUser = (user: UserModelDto) => {
+        // setFilteredUsers([...filteredUsers, user])
+        let filter = filteredUsers.filter(val => val.username !== user.username)
+        setFilteredUsers(filter)
+
+    }
+
+    const fetchUsers = async () => {
+        setShowMenu(true)
+        console.log("Fetching users")
+        await fetch(`${API_URL}/api/v1/user/getAllUsersWithoutId/${userId}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${await AsyncStorage.getItem('token')}`
+            }
+        })
+        .then(res => res.json())
+        .then(responseData => {
+            setUsersList(responseData)
+            console.log("Done fetching", responseData)
+        }).catch(err => {
+            console.log("Fetch userNotes err: ", err)
+
+        })
+    }
     return (
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={80}
+        keyboardVerticalOffset={20}
       >
+
       <View style={styles.darkTheme}>
         <View style={styles.header}>
           <View>
@@ -125,18 +158,42 @@ export default function EditNote() {
                   username: "wluka"
                 }
 
-
-
-
             ]
             }
-              onAddUser={() => console.log("added")}
+              onAddUser={() => {
+                fetchUsers()
+                setShowMenu(!showMenu)
+              }}
               onRemoveUser={() => console.log("removed")}
             />
             {/* <FontAwesome6 name="user-plus" size={16} color="#fff" /> */}
+
+
+
           </View>
         </View>
-    
+              
+              {/* {showMenu && (
+                  <ScrollView 
+                      style={styles.searchUsers}
+                      keyboardShouldPersistTaps="handled"
+                  >
+                      { usersList.filter((item) => {
+                          console.log(filteredUsers)
+                          console.log(item)
+                          return (!filteredUsers.some((usr) => usr.userId === item.userId) && 
+                          (users === '' || item.username.toLowerCase().includes(users.toLowerCase())))
+                      }).map( (item, index) => {
+                          return(
+                              <Pressable 
+                                  onPress={() => addUserToNote(item)} 
+                                  style={styles.usersContainter} key={index}>
+                                  <Text style={styles.text}>{item.username}</Text>
+                              </Pressable>
+                          )
+                      })}
+                  </ScrollView>
+              )} */}
         <View style={styles.contentContainer}>
           <TextInput
             editable
@@ -167,7 +224,13 @@ export default function EditNote() {
               <Text style={styles.buttonText}>Back</Text>
             </Pressable>
           </View>
-        </View>
+          </View>
+            <AddRemoveUsersFromNote 
+              onClose={() => setShowMenu(false)}
+              isShown={showMenu}
+              userId={Number(userId)}
+              noteId={Number(noteId)}
+            />
       </KeyboardAvoidingView>  
     );
     
@@ -241,6 +304,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#fff",
+  },
+  text: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  addedUsers: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+    gap: 8,
+  },
+  addedUserItem: {
+    backgroundColor: '#ff9800',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  searchUsers: {
+    maxHeight: 150,
+    backgroundColor: '#2c2c2c',
+    borderRadius: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  usersContainter: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderBottomColor: '#444',
+    borderBottomWidth: 1,
   },
 });
 
