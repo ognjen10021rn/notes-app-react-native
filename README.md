@@ -1,50 +1,90 @@
-# Welcome to your Expo app 👋
+# 📝 LivePad – React Native Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**LivePad** is a real-time note-taking mobile app built with **React Native**. It allows users to create, edit, and delete notes with live sync support via WebSockets. This is the mobile frontend for the [LivePad Spring Boot backend](https://github.com/ognjen10021rn/notes-app-spring-boot).
 
-## Get started
+## 📱 Features
 
-1. Install dependencies
+- 📄 Create, edit, and delete notes
+- 🔄 Real-time sync with backend via WebSocket
+- 🔐 Secure login and registration using JWT
+- 🌙 Light and dark theme support (optional)
+- 📶 Offline-friendly architecture (optional)
 
-   ```bash
-   npm install
-   ```
+## 🛠 Tech Stack
 
-2. Start the app
+- React Native (Expo)
+- TypeScript
+- React Navigation
+- Axios (REST API communication)
+- WebSocket (real-time sync)
+- AsyncStorage (JWT token storage)
 
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+## 📂Project Structure
+```graphql
+.
+├── components/       # Reusable UI components
+├── screens/          # App screens (Login, Register, Notes)
+├── services/         # API and WebSocket logic
+├── context/          # Auth and global state management
+├── assets/           # Images, icons, etc.
+└── App.tsx           # Entry point
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Learn more
+## 🚀 Getting Started
 
-To learn more about developing your project with Expo, look at the following resources:
+### Prerequisites
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Node.js & npm/yarn
+- Expo CLI (`npm install -g expo-cli`)
+- Backend running (see [LivePad Spring Boot backend](https://github.com/ognjen10021rn/notes-app-spring-boot))
 
-## Join the community
+### Clone the Repository
 
-Join our community of developers creating universal apps.
+```bash
+git clone https://github.com/ognjen10021rn/notes-app-react-native.git
+cd notes-app-react-native
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Configure project
+
+Update the API base URL in a ``paths.js`` file (in ``notes-app-react-native/paths.js``) to point to your backend:
+```bash
+# Make sure you match the port and ip address on the backend side
+export const API_URL = "<your-ip-address>:8080"
+export const WEB_SOCKET_URL = "<your-ip-address>:8080"
+```
+
+```bash
+npm install
+# or
+yarn
+```
+
+### Start project
+
+Navigate to ``notes-app-react-native``:
+
+```bash
+npx expo start --clear --port 8081
+```
+
+
+You have 2 options:
+
+1. Run with emulator:
+
+Read this:
+``https://docs.expo.dev/workflow/android-studio-emulator/``
+
+2. Run on phone:
+
+- Go to the app store or play store on your phone and download ``Expo Go``
+- Create an account
+- Type the ``exp://`` link from the console or scan the QR Code
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+
