@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { UserModel } from '@/assets/model';
+import { UserModel, UserModelDto } from '@/assets/model';
 
 type UserAvatarType = {
-    users: UserModel[];
+    users: UserModelDto[];
     onAddUser: () => void;
     onRemoveUser: (id : number) => void;
 }
@@ -14,9 +14,9 @@ export default function UserAvatars({ users, onAddUser, onRemoveUser } : UserAva
     <View style={styles.avatarRow}>
       {users.map((user) => (
         <TouchableOpacity
-          key={user.id}
+          key={user.userId}
           style={styles.avatar}
-          onPress={() => onRemoveUser(user.id)}
+          onPress={() => onRemoveUser(user.userId)}
         >
           <Text style={styles.avatarText}>{user.username[0].toUpperCase()}</Text>
         </TouchableOpacity>

@@ -20,9 +20,12 @@ export default function AddRemoveUsersFromNote({noteId ,isShown, userId, onClose
     const [showMenu, setShowMenu] = useState(false)
     const [usersList, setUsersList] = useState<UserModelDto[]>([])
     const [filteredUsers, setFilteredUsers] = useState<UserModelDto[]>([])    
+    const [addedIds, setAddedIds] = useState<number[]>([])
+    const [removedIds, setRemovedIds] = useState<number[]>([])
     const slideAnim = useRef(new Animated.Value(200)).current; // Start below screen
 
     useEffect(() => {
+      closeModal()
       if (isShown) {
         Animated.timing(slideAnim, {
           toValue: 0,
@@ -77,48 +80,65 @@ export default function AddRemoveUsersFromNote({noteId ,isShown, userId, onClose
     const addUserToNote = (user: UserModelDto) => {
         setUsersInNote([...usersInNote, user])
         let filter = usersNotInNote.filter(val => val.username !== user.username)
+        setAddedIds([...addedIds, user.userId])
         setUsersNotInNote(filter)
+        let removeFltr = removedIds.filter(id => id !== user.userId)
+        setRemovedIds(removeFltr)
     }
     const removeAddedUser = (user: UserModelDto) => {
-        // setFilteredUsers([...filteredUsers, user])
         let filter = usersInNote.filter(val => val.username !== user.username)
         setUsersInNote(filter)
         setUsersNotInNote([...usersNotInNote, user])
-
+        setRemovedIds([...removedIds, user.userId])
+        let addFltr = addedIds.filter(id => id !== user.userId)
+        setAddedIds(addFltr)
     }
 
 
     const submit = async () => {
-        // console.log(userId, await AsyncStorage.getItem('token'))
-        // console.log(titl, filteredUsers.map(user => user.userId))
-        await fetch(`${API_URL}/api/v1/note/createNote/${userId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization' : `Bearer ${await AsyncStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                userIds: filteredUsers.map(user => user.userId)
-                
+        console.log(addedIds, " Added")
+        console.log(removedIds, " Removed")
+        if(addedIds.length > 0){
+            const response = await fetch(`${API_URL}/api/v1/user/addUserToNote/${noteId}`, {
+              method: "POST",
+              headers: {
+                "Authorization" : `Bearer ${await AsyncStorage.getItem("token")}`,
+                "Content-Type" : "application/json"
+              },
+              body : JSON.stringify({
+                userId : userId,
+                userIds: addedIds
+              })
             })
-        })
-        .then(res => res.json())
-        .then(responseData => {
-            console.log(responseData, "Create note data")
-            setFilteredUsers([])
-            // setUsersList([])
-            setShowMenu(false)
-            // stavlja funkciju da pokazuje na void pa se zatvori
+            console.log(response.body)
+            closeModal()
             onClose()
-        })
-        .catch(err => {
-            console.log(err, "Create note error!")
-            setFilteredUsers([])
-            // setUsersList([])
-            setShowMenu(false)
-            // stavlja funkciju da pokazuje na void pa se zatvori
+        }
+        if(removedIds.length > 0){
+            const response = await fetch(`${API_URL}/api/v1/user/removeUserFromNote/${noteId}`, {
+              method: "POST",
+              headers: {
+                "Authorization" : `Bearer ${await AsyncStorage.getItem("token")}`,
+                "Content-Type" : "application/json"
+              },
+              body : JSON.stringify({
+                userId : userId,
+                userIds: removedIds
+              })
+            })
+            console.log(response.body)
+            closeModal()
             onClose()
-        })
+        }
+    }
+
+    // kada se zatvara modal samo resetujemo state kada se otvori da bude fresh
+    function closeModal(){
+      setAddedIds([])
+      setRemovedIds([])
+      setShowMenu(false)
+      setUsersInNote([])
+      setUsersNotInNote([])
     }
 
     function stringTooLongPipe(str: string){
@@ -135,7 +155,7 @@ export default function AddRemoveUsersFromNote({noteId ,isShown, userId, onClose
           animationType="none"
           transparent={true}
           visible={isShown}
-          onRequestClose={onClose}
+          onRequestClose={() => closeModal()}
         >
         <TouchableWithoutFeedback onPress={onClose} >
           <View style={styles.darkTheme}>

@@ -22,6 +22,7 @@ export default function EditNote() {
     const navigation = useNavigation();
     const [showMenu, setShowMenu] = useState(false)
     const [usersList, setUsersList] = useState<UserModelDto[]>([])
+    const [usersInNote, setUsersInNote] = useState<UserModelDto[]>([])
     const [filteredUsers, setFilteredUsers] = useState<UserModelDto[]>([])    
     const [users, setUsers] = useState('')
 
@@ -41,8 +42,10 @@ export default function EditNote() {
         if(noteId){
             fetchNoteById(Number(noteId));
         }
+
         navigation.setOptions({title: "Notes"})
         
+        fetchUsersInNote()
     },[noteId])
 
     const datePipe = ((str : string | undefined) => {
@@ -68,6 +71,24 @@ export default function EditNote() {
 
 
     }
+    const fetchUsersInNote = async () => {
+        // setShowMenu(true)
+        console.log("Fetching users not in note!")
+        await fetch(`${API_URL}/api/v1/user/getAllUsersFromNoteUsingNoteId/${noteId}/${userId}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${await AsyncStorage.getItem('token')}`
+            }
+        })
+        .then(res => res.json())
+        .then(responseData => {
+            setUsersInNote(responseData)
+            console.log("Done fetching", responseData)
+        }).catch(err => {
+            console.log("Fetch userNotes err: ", err)
+
+        })
+    }
 
     const back = (() => {
         // TODO: add back
@@ -88,16 +109,6 @@ export default function EditNote() {
         }
     }
 
-    const addUserToNote = (user: UserModelDto) => {
-        setFilteredUsers([...filteredUsers, user])
-    }
-    const removeAddedUser = (user: UserModelDto) => {
-        // setFilteredUsers([...filteredUsers, user])
-        let filter = filteredUsers.filter(val => val.username !== user.username)
-        setFilteredUsers(filter)
-
-    }
-
     const fetchUsers = async () => {
         setShowMenu(true)
         console.log("Fetching users")
@@ -116,6 +127,12 @@ export default function EditNote() {
 
         })
     }
+
+    const refreshMenu = async () => {
+      setShowMenu(false)
+      fetchUsersInNote()
+
+    }
     return (
 
       <KeyboardAvoidingView
@@ -132,34 +149,7 @@ export default function EditNote() {
           </View>
           <View>
             <UserAvatars 
-              users={[
-                {
-                  id: 1,
-                  username: "ogisa"
-                },
-                {
-                  id: 2,
-                  username: "pera"
-                },
-                {
-                  id: 3,
-                  username: "zika"
-                },
-                {
-                  id: 4,
-                  username: "mika"
-                },
-                {
-                  id: 5,
-                  username: "luka"
-                },
-                {
-                  id: 6,
-                  username: "wluka"
-                }
-
-            ]
-            }
+              users={usersInNote}
               onAddUser={() => {
                 fetchUsers()
                 setShowMenu(!showMenu)
@@ -172,28 +162,6 @@ export default function EditNote() {
 
           </View>
         </View>
-              
-              {/* {showMenu && (
-                  <ScrollView 
-                      style={styles.searchUsers}
-                      keyboardShouldPersistTaps="handled"
-                  >
-                      { usersList.filter((item) => {
-                          console.log(filteredUsers)
-                          console.log(item)
-                          return (!filteredUsers.some((usr) => usr.userId === item.userId) && 
-                          (users === '' || item.username.toLowerCase().includes(users.toLowerCase())))
-                      }).map( (item, index) => {
-                          return(
-                              <Pressable 
-                                  onPress={() => addUserToNote(item)} 
-                                  style={styles.usersContainter} key={index}>
-                                  <Text style={styles.text}>{item.username}</Text>
-                              </Pressable>
-                          )
-                      })}
-                  </ScrollView>
-              )} */}
         <View style={styles.contentContainer}>
           <TextInput
             editable
@@ -226,7 +194,7 @@ export default function EditNote() {
           </View>
           </View>
             <AddRemoveUsersFromNote 
-              onClose={() => setShowMenu(false)}
+              onClose={() => refreshMenu()}
               isShown={showMenu}
               userId={Number(userId)}
               noteId={Number(noteId)}

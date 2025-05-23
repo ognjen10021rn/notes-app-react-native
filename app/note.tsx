@@ -14,7 +14,6 @@ import Options from "./options";
  export default function Note( {note, userId, onLongPress, showModalNote} : NoteProps) {
 
     // const [showModal, setShowModal] = useState(false);
-    const [isModalShownNumber, setIsModalShownNumber] = useState(0);
     
     return (
         <View>
