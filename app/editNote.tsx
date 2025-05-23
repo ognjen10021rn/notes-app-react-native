@@ -28,7 +28,6 @@ export default function EditNote() {
 
     useEffect(() => {
       websocketService.connect(noteId, (newNote : NoteModel) => {
-          // console.log(newNote, "stigao je novi note")
           setNote(newNote)
       });
   
@@ -43,7 +42,19 @@ export default function EditNote() {
             fetchNoteById(Number(noteId));
         }
 
-        navigation.setOptions({title: "Notes"})
+        navigation.setOptions(
+          {
+          title: 'Notes',
+          headerStyle: {
+            backgroundColor: '#1e1e1e', // Change this to your preferred header background color
+          },
+          headerTintColor: '#fff', // Color of the back arrow and title text
+          headerTitleStyle: {
+            color: '#fff', // Ensures title text is white
+            fontWeight: 'bold',
+          }
+        },
+        )
         
         fetchUsersInNote()
     },[noteId])
@@ -91,8 +102,7 @@ export default function EditNote() {
     }
 
     const back = (() => {
-        // TODO: add back
-        console.log("back")
+        navigation.goBack()
     })
 
     const fetchNoteById = async (noteId: number) => {
@@ -156,10 +166,6 @@ export default function EditNote() {
               }}
               onRemoveUser={() => console.log("removed")}
             />
-            {/* <FontAwesome6 name="user-plus" size={16} color="#fff" /> */}
-
-
-
           </View>
         </View>
         <View style={styles.contentContainer}>
