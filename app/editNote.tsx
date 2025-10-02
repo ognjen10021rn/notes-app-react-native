@@ -1,156 +1,177 @@
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Pressable,
+  Image,
+  FlatList,
+  KeyboardAvoidingView,
+  KeyboardAvoidingViewComponent,
+  TextInput,
+  Platform,
+  ScrollView,
+} from "react-native";
+import Menu from "./menu";
+import {
+  EditNoteDto,
+  Note,
+  NoteModel,
+  UserModel,
+  UserModelDto,
+} from "../assets/model";
+import { API_URL, WEB_SOCKET_URL } from "@/paths";
+import CreateNote from "./createNote";
+import { format } from "date-fns";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import websocketService from "./webSockets";
+import { FontAwesome6 } from "@expo/vector-icons";
+import UserHeader from "./userHeader";
+import UserAvatars from "./userAvatars";
+import AddRemoveUsersFromNote from "./addRemoveUsersFromNote";
+import { editNoteActionsList } from "@/constants/editNoteActionList";
+import EditNoteAction from "@/components/editNoteAction";
 
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Pressable, Image, FlatList, KeyboardAvoidingView, KeyboardAvoidingViewComponent, TextInput, Platform, ScrollView } from 'react-native';
-import Menu from './menu';
-import { EditNoteDto, Note, NoteModel, UserModel, UserModelDto } from '../assets/model';
-import { API_URL, WEB_SOCKET_URL } from '@/paths';
-import CreateNote from './createNote';
-import { format } from 'date-fns';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import websocketService from './webSockets';
-import { FontAwesome6 } from '@expo/vector-icons';
-import UserHeader from './userHeader';
-import UserAvatars from './userAvatars';
-import AddRemoveUsersFromNote from './addRemoveUsersFromNote';
-
+export const NUMBER_OF_ACTIONS = 4;
 
 export default function EditNote() {
-    const { noteId } = useLocalSearchParams();
-    const { userId } = useLocalSearchParams();
-    const [note, setNote] = useState<NoteModel | null>(null);
-    const navigation = useNavigation();
-    const [showMenu, setShowMenu] = useState(false)
-    const [usersList, setUsersList] = useState<UserModelDto[]>([])
-    const [usersInNote, setUsersInNote] = useState<UserModelDto[]>([])
-    const [filteredUsers, setFilteredUsers] = useState<UserModelDto[]>([])    
-    const [users, setUsers] = useState('')
+  const { noteId } = useLocalSearchParams();
+  const { userId } = useLocalSearchParams();
+  const [note, setNote] = useState<NoteModel | null>(null);
+  const navigation = useNavigation();
+  const [showMenu, setShowMenu] = useState(false);
+  const [usersList, setUsersList] = useState<UserModelDto[]>([]);
+  const [usersInNote, setUsersInNote] = useState<UserModelDto[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserModelDto[]>([]);
+  const [users, setUsers] = useState("");
 
-    useEffect(() => {
-      websocketService.connect(noteId, (newNote : NoteModel) => {
-          setNote(newNote)
-      });
-  
-      return () => {
-        websocketService.disconnect();
-        console.log("return")
-      };
-    }, []);
+  useEffect(() => {
+    websocketService.connect(noteId, (newNote: NoteModel) => {
+      setNote(newNote);
+    });
 
-    useEffect(() => {
-        if(noteId){
-            fetchNoteById(Number(noteId));
-        }
+    return () => {
+      websocketService.disconnect();
+      console.log("return");
+    };
+  }, []);
 
-        navigation.setOptions(
-          {
-          title: 'Notes',
-          headerStyle: {
-            backgroundColor: '#1e1e1e', // Change this to your preferred header background color
-          },
-          headerTintColor: '#fff', // Color of the back arrow and title text
-          headerTitleStyle: {
-            color: '#fff', // Ensures title text is white
-            fontWeight: 'bold',
-          }
+  useEffect(() => {
+    if (noteId) {
+      fetchNoteById(Number(noteId));
+    }
+
+    navigation.setOptions({
+      title: "Notes",
+      headerStyle: {
+        backgroundColor: "#1e1e1e", // Change this to your preferred header background color
+      },
+      headerTintColor: "#fff", // Color of the back arrow and title text
+      headerTitleStyle: {
+        color: "#fff", // Ensures title text is white
+        fontWeight: "bold",
+      },
+    });
+
+    fetchUsersInNote();
+  }, [noteId]);
+
+  const datePipe = (str: string | undefined) => {
+    if (str) {
+      return format(str, "do MMM yyyy HH:mm");
+    }
+  };
+
+  const submit = async () => {
+    if (!note) {
+      return;
+    }
+    console.log(note);
+    const payload: EditNoteDto = {
+      noteId: Number(noteId),
+      content: note?.content,
+      title: note?.title,
+      userId: Number(userId),
+    };
+
+    websocketService.sendMessage(payload);
+  };
+  const fetchUsersInNote = async () => {
+    // setShowMenu(true)
+    console.log("Fetching users not in note!");
+    await fetch(
+      `${API_URL}/api/v1/user/getAllUsersFromNoteUsingNoteId/${noteId}/${userId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
         },
-        )
-        
-        fetchUsersInNote()
-    },[noteId])
+      }
+    )
+      .then((res) => res.json())
+      .then((responseData) => {
+        setUsersInNote(responseData);
+        console.log("Done fetching", responseData);
+      })
+      .catch((err) => {
+        console.log("Fetch userNotes err: ", err);
+      });
+  };
 
-    const datePipe = ((str : string | undefined) => {
-        if(str){
-            return format(str, 'do MMM yyyy HH:mm')
-        }
+  const back = () => {
+    navigation.goBack();
+  };
+
+  const fetchNoteById = async (noteId: number) => {
+    const response = await fetch(
+      `${API_URL}/api/v1/note/getNoteById/${noteId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      }
+    );
+    let res = await response.json();
+    if (res) {
+      setNote(res);
+    }
+  };
+
+  const fetchUsers = async () => {
+    setShowMenu(true);
+    console.log("Fetching users");
+    await fetch(`${API_URL}/api/v1/user/getAllUsersWithoutId/${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+      },
     })
+      .then((res) => res.json())
+      .then((responseData) => {
+        setUsersList(responseData);
+        console.log("Done fetching", responseData);
+      })
+      .catch((err) => {
+        console.log("Fetch userNotes err: ", err);
+      });
+  };
 
-    const submit = async () => {
-        if(!note){
-          return;
-        }
-        console.log(note)
-        const payload: EditNoteDto = {
-          noteId: Number(noteId),
-          content: note?.content,
-          title: note?.title,
-          userId: Number(userId)
+  const refreshMenu = async () => {
+    setShowMenu(false);
+    fetchUsersInNote();
+  };
+  return (
+    // <FontAwesome5 name="calendar" size={24} color="black" />
+    //  <FontAwesome5 name="poll" size={24} color="black" />
+    //  <FontAwesome5 name="camera" size={24} color="black" />
 
-        };
-    
-        websocketService.sendMessage(payload);
-
-
-    }
-    const fetchUsersInNote = async () => {
-        // setShowMenu(true)
-        console.log("Fetching users not in note!")
-        await fetch(`${API_URL}/api/v1/user/getAllUsersFromNoteUsingNoteId/${noteId}/${userId}`, {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${await AsyncStorage.getItem('token')}`
-            }
-        })
-        .then(res => res.json())
-        .then(responseData => {
-            setUsersInNote(responseData)
-            console.log("Done fetching", responseData)
-        }).catch(err => {
-            console.log("Fetch userNotes err: ", err)
-
-        })
-    }
-
-    const back = (() => {
-        navigation.goBack()
-    })
-
-    const fetchNoteById = async (noteId: number) => {
-        const response = await fetch(`${API_URL}/api/v1/note/getNoteById/${noteId}`, {
-            method: "GET",
-            headers: {
-                "Authorization" : `Bearer ${await AsyncStorage.getItem("token")}`
-            }
-        });
-        let res = await response.json();
-        if(res){
-            setNote(res)
-
-        }
-    }
-
-    const fetchUsers = async () => {
-        setShowMenu(true)
-        console.log("Fetching users")
-        await fetch(`${API_URL}/api/v1/user/getAllUsersWithoutId/${userId}`, {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${await AsyncStorage.getItem('token')}`
-            }
-        })
-        .then(res => res.json())
-        .then(responseData => {
-            setUsersList(responseData)
-            console.log("Done fetching", responseData)
-        }).catch(err => {
-            console.log("Fetch userNotes err: ", err)
-
-        })
-    }
-
-    const refreshMenu = async () => {
-      setShowMenu(false)
-      fetchUsersInNote()
-
-    }
-    return (
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={20}
-      >
-
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={20}
+    >
       <View style={styles.darkTheme}>
         <View style={styles.header}>
           <View>
@@ -158,63 +179,78 @@ export default function EditNote() {
             <Text style={styles.dateText}>{datePipe(note?.updatedAt)}</Text>
           </View>
           <View>
-            <UserAvatars 
+            <UserAvatars
               users={usersInNote}
               onAddUser={() => {
-                fetchUsers()
-                setShowMenu(!showMenu)
+                fetchUsers();
+                setShowMenu(!showMenu);
               }}
               onRemoveUser={() => console.log("removed")}
             />
           </View>
+        </View>
+        <View style={styles.editActionPillsContainer}>
+          {editNoteActionsList.map((action) => (
+            <EditNoteAction
+              name={action.name}
+              type={action.type}
+              icon={action.icon}
+            />
+          ))}
         </View>
         <View style={styles.contentContainer}>
           <TextInput
             editable
             multiline
             maxLength={1024}
-            textAlignVertical="top"
+            textAlignVertical='top'
             onChangeText={(newContent) =>
-              setNote((prev) => (prev ? { ...prev, content: newContent } : null))
+              setNote((prev) =>
+                prev ? { ...prev, content: newContent } : null
+              )
             }
             value={note?.content || ""}
             style={styles.textInput}
-            placeholder="Tell me a note"
-            placeholderTextColor="#888"
+            placeholder='Tell me a note'
+            placeholderTextColor='#888'
           />
         </View>
-          <View style={styles.buttonGroup}>
-            <Pressable onPress={submit} style={({ pressed }) => [
+        <View style={styles.buttonGroup}>
+          <Pressable
+            onPress={submit}
+            style={({ pressed }) => [
               styles.buttonPrimary,
-              pressed && styles.buttonPressed
-            ]}>
-              <Text style={styles.buttonText}>Submit</Text>
-            </Pressable>
-      
-            <Pressable onPress={back} style={({ pressed }) => [
-              styles.buttonSecondary,
-              pressed && styles.buttonPressedSecondary
-            ]}>
-              <Text style={styles.buttonText}>Back</Text>
-            </Pressable>
-          </View>
-          </View>
-            <AddRemoveUsersFromNote 
-              onClose={() => refreshMenu()}
-              isShown={showMenu}
-              userId={Number(userId)}
-              noteId={Number(noteId)}
-            />
-      </KeyboardAvoidingView>  
-    );
-    
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.buttonText}>Submit</Text>
+          </Pressable>
 
+          <Pressable
+            onPress={back}
+            style={({ pressed }) => [
+              styles.buttonSecondary,
+              pressed && styles.buttonPressedSecondary,
+            ]}
+          >
+            <Text style={styles.buttonText}>Back</Text>
+          </Pressable>
+        </View>
+      </View>
+      <AddRemoveUsersFromNote
+        onClose={() => refreshMenu()}
+        isShown={showMenu}
+        userId={Number(userId)}
+        noteId={Number(noteId)}
+      />
+    </KeyboardAvoidingView>
+  );
 }
 
 const styles = StyleSheet.create({
   darkTheme: {
     flex: 1,
-    backgroundColor: '#151718',
+    backgroundColor: "#151718",
     paddingHorizontal: 16,
     paddingTop: 24,
   },
@@ -223,7 +259,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   headerText: {
     color: "#fff",
@@ -234,6 +270,14 @@ const styles = StyleSheet.create({
     color: "#999",
     fontSize: 14,
     marginTop: 4,
+  },
+
+  editActionPillsContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
   contentContainer: {
     flex: 1,
@@ -249,8 +293,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 12,
     marginBottom: 20,
   },
@@ -259,14 +303,14 @@ const styles = StyleSheet.create({
     backgroundColor: "orange",
     paddingVertical: 12,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonSecondary: {
     flex: 1,
     backgroundColor: "#333",
     paddingVertical: 12,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonPressed: {
     backgroundColor: "#ffcc80",
@@ -280,18 +324,18 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   text: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   addedUsers: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginVertical: 10,
     gap: 8,
   },
   addedUserItem: {
-    backgroundColor: '#ff9800',
+    backgroundColor: "#ff9800",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
@@ -300,7 +344,7 @@ const styles = StyleSheet.create({
   },
   searchUsers: {
     maxHeight: 150,
-    backgroundColor: '#2c2c2c',
+    backgroundColor: "#2c2c2c",
     borderRadius: 10,
     paddingVertical: 6,
     marginBottom: 10,
@@ -308,8 +352,7 @@ const styles = StyleSheet.create({
   usersContainter: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderBottomColor: '#444',
+    borderBottomColor: "#444",
     borderBottomWidth: 1,
   },
 });
-
