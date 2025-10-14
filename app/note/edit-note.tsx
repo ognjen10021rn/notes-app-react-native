@@ -5,35 +5,20 @@ import {
   View,
   Text,
   Pressable,
-  Image,
-  FlatList,
   KeyboardAvoidingView,
-  KeyboardAvoidingViewComponent,
   TextInput,
   Platform,
-  ScrollView,
 } from "react-native";
-import Menu from "./menu";
-import {
-  EditNoteDto,
-  Note,
-  NoteModel,
-  UserModel,
-  UserModelDto,
-} from "../assets/model";
-import { API_URL, WEB_SOCKET_URL } from "@/paths";
-import CreateNote from "./createNote";
+import { API_URL } from "@/paths";
 import { format } from "date-fns";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import websocketService from "./webSockets";
-import { FontAwesome6 } from "@expo/vector-icons";
-import UserHeader from "./userHeader";
-import UserAvatars from "./userAvatars";
-import AddRemoveUsersFromNote from "./addRemoveUsersFromNote";
-import { editNoteActionsList } from "@/constants/editNoteActionList";
-import EditNoteAction from "@/components/editNoteAction";
-
-export const NUMBER_OF_ACTIONS = 4;
+import UserAvatars from "../../src/features/note/components/user-avatars";
+import AddRemoveUsersFromNote from "../../src/features/note/components/add-remove-users-from-note";
+import EditNoteAction from "@/src/features/note/components/edit-note-action";
+import { UserModelDto } from "../../src/features/types/user-model";
+import { EditNoteDto, NoteModel } from "../../src/features/note/types";
+import { editNoteActionsList } from "../../src/features/note/constants/edit-note-action-list";
+import websocketService from "@/src/features/api/web-sockets";
 
 export default function EditNote() {
   const { noteId } = useLocalSearchParams();

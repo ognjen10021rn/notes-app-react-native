@@ -6,12 +6,14 @@ import {
   Alert,
   Pressable,
   Image,
+  Button,
 } from "react-native";
+import * as Linking from "expo-linking";
 
 import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useNavigation } from "expo-router";
-import { API_URL } from "../paths";
+import { useNavigation } from "expo-router";
+import { useOAuth } from "@/hooks/useOAuth";
+import { handleDeepLink, loginUser } from "@/src/features/login/api";
 
 export default function LoginScreen() {
   const [text, setText] = useState("");
@@ -20,69 +22,45 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
+
+    const checkInitialURL = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      console.log("Initial URL:", initialUrl);
+      if (initialUrl) {
+        handleDeepLink(initialUrl);
+      }
+    };
+    checkInitialURL();
+    const subscription = Linking.addEventListener("url", (event) => {
+      console.log("URL event received:", event.url);
+      handleDeepLink(event.url);
+    });
+
+    return () => subscription.remove();
   }, []);
 
-  const submit = async (text: string, password: string) => {
-    try {
-      let errs = [] as string[];
-      setErrors([]);
-      if (text.length < 4) {
-        errs.push("Username can't be shorter than 4 characters.");
-      }
-      // if(password.length < 8){
-      //     errs.push("Password can't be shorter than 8 characters.")
-      // }
-      setErrors(errs);
-      if (errs.length > 0) {
-        console.log("Nedovoljno karaktera");
-        return;
-      }
-      const response = await fetch(`${API_URL}/api/v1/user/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          usernameOrEmail: text,
-          password: password,
-        }),
-      });
-      console.log(response.json);
-      if (!response.ok) {
-        throw new Error("Login failed");
-      }
+  const submit = (username: string, password: string) => {
+    let errs = [] as string[];
 
-      const tkn = await response.json();
-      await AsyncStorage.setItem("token", tkn.token);
-      let user = parseJwt(tkn.token);
-      await AsyncStorage.setItem(
-        "user",
-        JSON.stringify({
-          username: user.username,
-          userId: user.id,
-        })
-      );
-      router.replace("/homepage");
-    } catch (error) {
-      console.log(error, "Login screen");
+    setErrors([]);
+
+    if (text.length < 4) {
+      errs.push("Username can't be shorter than 4 characters.");
     }
+
+    // if(password.length < 8){
+    //     errs.push("Password can't be shorter than 8 characters.")
+    // }
+
+    setErrors(errs);
+
+    if (errs.length > 0) {
+      console.log("Nedovoljno karaktera");
+      return;
+    }
+
+    loginUser(username, password);
   };
-
-  function parseJwt(token: string): any | undefined {
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-
-      const paddedBase64 = base64.padEnd(
-        base64.length + ((4 - (base64.length % 4)) % 4),
-        "="
-      );
-
-      return JSON.parse(atob(paddedBase64));
-    } catch (e) {
-      console.log(e, "Homepage err: ", token);
-    }
-  }
 
   return (
     <View style={styles.darkTheme}>
@@ -124,6 +102,9 @@ export default function LoginScreen() {
             Submit
           </Text>
         )}
+      </Pressable>
+      <Pressable onPress={async () => await useOAuth()}>
+        <Text style={{ color: "#fff" }}>Github</Text>
       </Pressable>
       {errors.map((err, index) => (
         <Text key={index} style={styles.errorText}>

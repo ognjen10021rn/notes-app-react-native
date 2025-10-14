@@ -3,6 +3,7 @@
 //  <FontAwesome5 name="poll" size={24} color="black" />
 //  <FontAwesome5 name="camera" size={24} color="black" />
 
+export const NUMBER_OF_ACTIONS = 4;
 export const editNoteActionsList = [
     {
         type: "event",

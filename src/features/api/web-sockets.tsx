@@ -1,13 +1,13 @@
-import { Client, IMessage } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
-import { EditNoteDto, Note, NoteModel } from '../assets/model';
-import { WEB_SOCKET_URL } from '@/paths';
-
+import { Client, IMessage } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { WEB_SOCKET_URL } from "@/paths";
+import { NoteModel } from "../note/types";
+import { EditNoteDto } from "../note/types";
 
 class WebSocketService {
   private client: Client | null = null;
 
-  connect(noteId : any, onNoteUpdate: (note: NoteModel) => void): void {
+  connect(noteId: any, onNoteUpdate: (note: NoteModel) => void): void {
     const socket = new SockJS(`${WEB_SOCKET_URL}/noteMessage`);
 
     this.client = new Client({
@@ -15,19 +15,16 @@ class WebSocketService {
       debug: (str: string) => console.log(str),
       reconnectDelay: 5000,
       onConnect: () => {
-        console.log('WebSocket connected');
+        console.log("WebSocket connected");
 
-        this.client?.subscribe(
-          `/topic/note/${noteId}`,
-          (message: IMessage) => {
-            const body: NoteModel = JSON.parse(message.body);
-            onNoteUpdate(body);
-          }
-        );
+        this.client?.subscribe(`/topic/note/${noteId}`, (message: IMessage) => {
+          const body: NoteModel = JSON.parse(message.body);
+          onNoteUpdate(body);
+        });
       },
       onStompError: (frame: any) => {
-        console.error('Broker error:', frame.headers['message']);
-        console.error('Details:', frame.body);
+        console.error("Broker error:", frame.headers["message"]);
+        console.error("Details:", frame.body);
       },
     });
 
@@ -37,11 +34,11 @@ class WebSocketService {
   sendMessage(payload: EditNoteDto): void {
     if (this.client && this.client.connected) {
       this.client.publish({
-        destination: '/app/update-note',
+        destination: "/app/update-note",
         body: JSON.stringify(payload),
       });
     } else {
-      console.warn('Cannot send message: STOMP client is not connected.');
+      console.warn("Cannot send message: STOMP client is not connected.");
     }
   }
 

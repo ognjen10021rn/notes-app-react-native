@@ -9,15 +9,6 @@ export interface NoteModel {
   updatedAt: string;
   version: number;
 }
-export interface UserModel {
-  id: number;
-  username: string;
-}
-
-export interface UserModelDto {
-  userId: number;
-  username: string;
-}
 export interface EditNoteDto {
   noteId?: number;
   userId?: number,

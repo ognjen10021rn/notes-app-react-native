@@ -1,3 +1,3 @@
 export const API_URL = "http://192.168.1.3:8080";
 // Temporary
-export const WEB_SOCKET_URL = "http://192.168.1.3:8081";
+export const WEB_SOCKET_URL = "http://192.168.1.3:8080";

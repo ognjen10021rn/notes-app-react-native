@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
-import { UserModel, UserModelDto } from "@/assets/model";
+import { UserModelDto } from "../../types/user-model";
 
 type UserAvatarType = {
   users: UserModelDto[];

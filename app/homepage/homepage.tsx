@@ -12,13 +12,13 @@ import {
   KeyboardAvoidingViewComponent,
 } from "react-native";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import Menu from "./menu";
-import { NoteModel, UserModel, UserModelDto } from "../assets/model";
-import { API_URL } from "@/paths";
-import CreateNote from "./createNote";
-import { NavigationContainer } from "@react-navigation/native";
 import MasonryList from "@react-native-seoul/masonry-list";
-import Note from "./note";
+import Menu from "@/src/features/homepage/components/menu";
+import { UserModelDto } from "@/src/features/types/user-model";
+import CreateNote from "../../src/features/note/components/create-note";
+import { NoteModel } from "../../src/features/note/types";
+import { fetchUserNotes } from "../../src/features/homepage/api";
+import Note from "@/src/features/note/components/note";
 
 export default function HomePage() {
   const [user, setUser] = useState<UserModelDto>({} as UserModelDto);
@@ -43,57 +43,40 @@ export default function HomePage() {
     initialize();
   }, []);
 
-  const fetchUserNotes = async (usr: UserModelDto) => {
-    console.log("Fetching notes for user!", usr);
-    if (!usr.userId) {
-      return;
+  const getUserNotes = async (user: UserModelDto) => {
+    let userNotes = await fetchUserNotes(user);
+
+    //setting userNotes
+
+    if (userNotes.length > 0) {
+      setNotes(
+        userNotes
+          .sort((a: NoteModel, b: NoteModel) => {
+            const date1 = new Date(a.updatedAt);
+            const date2 = new Date(b.updatedAt);
+            return date2.getTime() - date1.getTime();
+          })
+          .filter((item: NoteModel) => !item.isDeleted)
+      );
+      let optss = [];
+      for (let note of userNotes) {
+        optss.push({
+          id: note.noteId,
+          isShown: false,
+        });
+      }
+      setOpts(optss);
+    } else {
+      setNotes(userNotes);
+      let optss = [];
+      for (let note of userNotes) {
+        optss.push({
+          id: note.noteId,
+          isShown: false,
+        });
+      }
+      setOpts(optss);
     }
-    await fetch(`${API_URL}/api/v1/note/getAllNoteByUserId/${usr.userId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((responseData) => {
-        //set notes i sortiraj da bude najnovije
-        // crashuje ako pokusa da sortira a prazan je
-        console.log(responseData);
-        if (responseData.length > 0) {
-          setNotes(
-            responseData
-              .sort((a: NoteModel, b: NoteModel) => {
-                const date1 = new Date(a.updatedAt);
-                const date2 = new Date(b.updatedAt);
-                return date2.getTime() - date1.getTime();
-              })
-              .filter((item: NoteModel) => !item.isDeleted)
-          );
-          let optss = [];
-          for (let note of responseData) {
-            optss.push({
-              id: note.noteId,
-              isShown: false,
-            });
-          }
-          setOpts(optss);
-        } else {
-          setNotes(responseData);
-          let optss = [];
-          for (let note of responseData) {
-            optss.push({
-              id: note.noteId,
-              isShown: false,
-            });
-          }
-          setOpts(optss);
-        }
-        console.log("Done fetching", responseData);
-      })
-      .catch((err) => {
-        router.replace("/login");
-        console.log("Fetch userNotes err: ", err);
-      });
   };
 
   const initialize = async () => {
@@ -101,7 +84,7 @@ export default function HomePage() {
     if (userCredentials != null) {
       let userModel: UserModelDto = JSON.parse(userCredentials);
       setUser(userModel);
-      await fetchUserNotes({
+      await getUserNotes({
         username: userModel.username,
         userId: userModel.userId,
       });
