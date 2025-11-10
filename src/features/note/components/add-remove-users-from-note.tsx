@@ -12,9 +12,13 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { API_URL } from "@/paths";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserModelDto } from "@/src/features/types/user-model";
+import {
+  addUsersToNote,
+  fetchUsersInNote,
+  fetchUsersNotInNote,
+  removeUsersFromNote,
+} from "../api/intex";
 
 type CreateNoteProps = {
   noteId: number;
@@ -49,53 +53,24 @@ export default function AddRemoveUsersFromNote({
     } else {
       slideAnim.setValue(200); // Reset when closed
     }
-    fetchUsersInNote();
-    fetchUsersNotInNote();
+    userNoteInitialize();
   }, [isShown]);
 
-  const fetchUsersNotInNote = async () => {
+  /**
+   * Initialize users that are in note and the ones that are not
+   */
+  const userNoteInitialize = async () => {
     setShowMenu(true);
-    console.log("Fetching users in note!");
-    await fetch(
-      `${API_URL}/api/v1/user/getAllUsersThatAreNotInNoteId/${noteId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((responseData) => {
-        setUsersNotInNote(responseData);
-        console.log("Done fetching", responseData);
-      })
-      .catch((err) => {
-        console.log("Fetch userNotes err: ", err);
-      });
-  };
-  const fetchUsersInNote = async () => {
-    setShowMenu(true);
-    console.log("Fetching users not in note!");
-    await fetch(
-      `${API_URL}/api/v1/user/getAllUsersFromNoteUsingNoteId/${noteId}/${userId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((responseData) => {
-        setUsersInNote(responseData);
-        console.log("Done fetching", responseData);
-      })
-      .catch((err) => {
-        console.log("Fetch userNotes err: ", err);
-      });
+    let usrsNotInNote = await fetchUsersNotInNote(noteId);
+    let usrsInNote = await fetchUsersInNote(noteId, userId);
+    setUsersNotInNote(usrsNotInNote);
+    setUsersInNote(usrsInNote);
   };
 
+  /**
+   *
+   * @param user User that is being added to note
+   */
   const addUserToNote = (user: UserModelDto) => {
     setUsersInNote([...usersInNote, user]);
     let filter = usersNotInNote.filter((val) => val.username !== user.username);
@@ -104,6 +79,11 @@ export default function AddRemoveUsersFromNote({
     let removeFltr = removedIds.filter((id) => id !== user.userId);
     setRemovedIds(removeFltr);
   };
+
+  /**
+   *
+   * @param user User that is being removed from note
+   */
   const removeAddedUser = (user: UserModelDto) => {
     let filter = usersInNote.filter((val) => val.username !== user.username);
     setUsersInNote(filter);
@@ -113,56 +93,29 @@ export default function AddRemoveUsersFromNote({
     setAddedIds(addFltr);
   };
 
+  /**
+   * Submit changes
+   */
   const submit = async () => {
-    console.log(addedIds, " Added");
-    console.log(removedIds, " Removed");
     if (addedIds.length > 0) {
-      const response = await fetch(
-        `${API_URL}/api/v1/user/addUserToNote/${noteId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: userId,
-            userIds: addedIds,
-          }),
-        }
-      );
-      console.log(response.body);
-      closeModal();
-      onClose();
+      addUsersToNote(noteId, userId, addedIds);
     }
     if (removedIds.length > 0) {
-      const response = await fetch(
-        `${API_URL}/api/v1/user/removeUserFromNote/${noteId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: userId,
-            userIds: removedIds,
-          }),
-        }
-      );
-      console.log(response.body);
-      closeModal();
-      onClose();
+      removeUsersFromNote(noteId, userId, removedIds);
     }
+    closeModal();
   };
 
-  // kada se zatvara modal samo resetujemo state kada se otvori da bude fresh
+  /**
+   * Reset all states when closing
+   */
   function closeModal() {
     setAddedIds([]);
     setRemovedIds([]);
     setShowMenu(false);
     setUsersInNote([]);
     setUsersNotInNote([]);
+    onClose();
   }
 
   function stringTooLongPipe(str: string) {
@@ -214,7 +167,7 @@ export default function AddRemoveUsersFromNote({
                       placeholderTextColor={styles.input.color}
                       value={users}
                       onChangeText={setUsers}
-                      onFocus={() => fetchUsersNotInNote()}
+                      onFocus={() => userNoteInitialize()}
                       onBlur={() => setShowMenu(true)}
                     />
                     {showMenu && (

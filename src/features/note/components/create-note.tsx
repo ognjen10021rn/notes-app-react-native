@@ -15,6 +15,7 @@ import {
 import { API_URL } from "@/paths";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserModelDto } from "@/src/features/types/user-model";
+import { createNote, fetchUsersWithoutUserId } from "../api/intex";
 
 type CreateNoteProps = {
   isShown: boolean;
@@ -41,75 +42,80 @@ export default function CreateNote({
         useNativeDriver: true,
       }).start();
     } else {
-      slideAnim.setValue(200); // Reset when closed
+      slideAnim.setValue(200);
     }
   }, [isShown]);
-  // useEffect(() => {
-  //     // fetchUsers()
 
-  // },[userId, isShown])
-
+  /**
+   * Fetching all users without the note creator
+   */
   const fetchUsers = async () => {
     setShowMenu(true);
-    console.log("Fetching users");
-    await fetch(`${API_URL}/api/v1/user/getAllUsersWithoutId/${userId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((responseData) => {
-        setUsersList(responseData);
-        console.log("Done fetching", responseData);
-      })
-      .catch((err) => {
-        console.log("Fetch userNotes err: ", err);
-      });
+    let usersWithoutId = await fetchUsersWithoutUserId(userId);
+    setUsersList(usersWithoutId);
   };
 
+  /**
+   *
+   * @param user User to add to the note
+   */
   const addUserToNote = (user: UserModelDto) => {
     setFilteredUsers([...filteredUsers, user]);
   };
+
+  /**
+   *
+   * @param user Removing the user from the list
+   */
   const removeAddedUser = (user: UserModelDto) => {
-    // setFilteredUsers([...filteredUsers, user])
     let filter = filteredUsers.filter((val) => val.username !== user.username);
     setFilteredUsers(filter);
   };
 
-  const submit = async (titl: string) => {
-    // console.log(userId, await AsyncStorage.getItem('token'))
-    // console.log(titl, filteredUsers.map(user => user.userId))
-    await fetch(`${API_URL}/api/v1/note/createNote/${userId}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: titl,
-        userIds: filteredUsers.map((user) => user.userId),
-      }),
-    })
-      .then((res) => res.json())
-      .then((responseData) => {
-        console.log(responseData, "Create note data");
-        setFilteredUsers([]);
-        setUsersList([]);
-        setTitle("");
-        setShowMenu(false);
-        // stavlja funkciju da pokazuje na void pa se zatvori
-        onClose();
-      })
-      .catch((err) => {
-        console.log(err, "Create note error!");
-        setFilteredUsers([]);
-        setUsersList([]);
-        setTitle("");
-        setShowMenu(false);
-        // stavlja funkciju da pokazuje na void pa se zatvori
-        onClose();
-      });
+  /**
+   * Create note with the current user being the amdin and user ids that need to be added
+   * @param title Title for note
+   */
+  const submit = async (title: string) => {
+    console.log("ovde1?");
+    let userIds = filteredUsers.map((user) => user.userId);
+    let createNoteResponse = await createNote(userId, title, userIds);
+    console.log("ovde?");
+    setFilteredUsers([]);
+    setUsersList([]);
+    setTitle("");
+    setShowMenu(false);
+    onClose();
+
+    // await fetch(`${API_URL}/api/v1/note/createNote/${userId}`, {
+    //   method: "POST",
+    //   headers: {
+    //     Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({
+    //     title: titl,
+    //     userIds: filteredUsers.map((user) => user.userId),
+    //   }),
+    // })
+    //   .then((res) => res.json())
+    //   .then((responseData) => {
+    //     console.log(responseData, "Create note data");
+    //     setFilteredUsers([]);
+    //     setUsersList([]);
+    //     setTitle("");
+    //     setShowMenu(false);
+    //     onClose();
+    //   })
+    //   .catch((err) => {
+    //     console.log(err, "Create note error!");
+    //     setFilteredUsers([]);
+    //     setUsersList([]);
+    //     setTitle("");
+    //     setShowMenu(false);
+    //     // stavlja funkciju da pokazuje na void pa se zatvori
+    //     onClose();
+    //   });
   };
 
   function stringTooLongPipe(str: string) {
